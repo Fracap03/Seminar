@@ -2,7 +2,7 @@
 \documentclass[11pt,aspectratio=169]{beamer}
 
 \title{Identifiability Guarantees for Causal Disentanglement from Soft Interventions}
-\date[Seminar talk]{Zhang et al.\ (2023), with von K\"ugelgen et al.\ (2023)}
+\date[]{Zhang et al.\ (2023), with von K\"ugelgen et al.\ (2023)}
 \author{Joan and Francesco} % TODO: full names
 \institute{ETH Zurich}
 
@@ -13,6 +13,10 @@
 
 \usetikzlibrary{arrows.meta,positioning,shapes.geometric,fit,calc}
 \tikzset{
+  % overlay helpers: hide a TikZ element (keeping its space) outside the given slides
+  invisible/.style={opacity=0,text opacity=0},
+  alt/.code args={<#1>#2#3}{\alt<#1>{\pgfkeysalso{#2}}{\pgfkeysalso{#3}}},
+  visible on/.style={alt={#1{}{invisible}}},
   lat/.style={circle,draw,minimum size=7mm,inner sep=0pt,font=\footnotesize},
   intv/.style={lat,draw=ETHRed,very thick,text=ETHRed},
   arr/.style={-{Stealth[length=2mm]},thick},
@@ -27,6 +31,19 @@
 \newcommand{\red}[1]{\textcolor{ETHRed}{#1}}
 \newcommand{\src}[1]{\par\vfill{\tiny\textcolor{ETHGray}{#1}}}
 \newcommand{\crl}{\sim_{\textsc{crl}}}
+% Small pixelated "photo" (10x10 pixels); #1,#2 = ball centre in pixel units.
+% Each pixel takes one colour: ball, grass or sky, decided at the pixel centre.
+% The red square marks the same pixel i in every image.
+\newcommand{\pixelscene}[2]{%
+	\begin{tikzpicture}[x=2.2mm,y=2.2mm]
+		\foreach \i in {0,...,9}{\foreach \j in {0,...,9}{%
+			\pgfmathtruncatemacro{\pix}{veclen(\i+0.5-#1,\j+0.5-#2)<2.4 ? 1 : (\j<3 ? 2 : 0)}%
+			\ifcase\pix \def\pixcol{ETHBlue!20}\or \def\pixcol{ETHBronze!80!orange}\or \def\pixcol{ETHGreen!55}\fi
+			\fill[\pixcol] (\i,\j) rectangle +(1,1);
+		}}
+		\draw[white,line width=0.5pt,step=2.2mm] (0,0) grid (10,10);
+		\draw[ETHRed,very thick] (3,4) rectangle (4,5);
+	\end{tikzpicture}}
 
 \begin{document}
 
@@ -37,18 +54,53 @@
 \section{Introduction \hfill {\normalsize Joan}}
 %======================================================================
 
-\begin{frame}{The variables we measure are rarely the causal ones}
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
+\begin{frame}{Why discovering causal structures is important?}
+	\vspace*{-4mm}
+	\begin{block}{Example: predicting the effect of an intervention}
+	\centering
+	\begin{tikzpicture}[
+			var/.style={rectangle,rounded corners=2mm,draw,thick,minimum height=7mm,minimum width=16mm,font=\scriptsize,align=center,inner sep=1pt},
+			ivar/.style={var,draw=ETHRed,very thick,text=ETHRed}]
+		% --- step 1: the causal graph
+		\begin{scope}[local bounding box=L]
+			\node[var] (a1) at (0,0) {Air\\pressure};
+			\node[var] (a2) at (-13mm,-15mm) {Barometer\\reading};
+			\node[var] (a3) at (13mm,-15mm) {Storm};
+			\draw[arr] (a1) -- (a2); \draw[arr] (a1) -- (a3);
+		\end{scope}
+		\node[lbl,above=2mm of a1] {\textbf{Causal graph}};
+		% --- step 2: intervene on the barometer
+		\begin{scope}[xshift=66mm,local bounding box=R,visible on=<2->]
+			\node[var] (b1) at (0,0) {Air\\pressure};
+			\node[ivar] (b2) at (-13mm,-15mm) {Barometer\\reading};
+			\node[var] (b3) at (13mm,-15mm) {Storm};
+			\draw[gone] (b1) -- (b2); \draw[arr] (b1) -- (b3);
+		\end{scope}
+		\node[visible on=<2->,lbl,below=1mm of b3] {storm still comes};
+		\node[visible on=<2->,lbl,above=2mm of b1] {\textbf{Predicted effect}};
+		\draw[visible on=<2->,-{Stealth[length=3mm]},line width=1.2pt,ETHGray]
+			($(L.east)+(3mm,0)$) -- node[lbl,above=1mm] {push the needle\\to \red{high pressure}\\to avoid the storm} ($(R.west)+(-3mm,0)$);
+		\node[visible on=<2->,lbl,align=left,right=3mm of R.east,anchor=west] {%
+			\tikz\node[ivar,minimum width=4mm,minimum height=3mm,rounded corners=1pt]{}; intervened\\[1mm]
+			\tikz\node[var,minimum width=4mm,minimum height=3mm,rounded corners=1pt]{}; unchanged};
+	\end{tikzpicture}
+	\end{block}
+	\vspace{10mm}
+	\uncover<3->{Discovering causal structure from observational and interventional data allows scientists to reason about \textbf{causal questions}.}
+\end{frame}
+
+\begin{frame}[t]{The variables we measure are rarely the causal ones}
+	\vspace*{-1mm}
+	\begin{columns}
+		\begin{column}{0.78\textwidth}
 			\begin{block}{Images}
-				\begin{itemize}
-					\item Pixel $i$ in one image has no relation to pixel $i$ in another.
-					\item Intervening on a single pixel means nothing.
-					\item The causal variables are \emph{objects}: abstract functions of pixels.
-				\end{itemize}
+				\centering
+				\vspace*{0.45mm}
+				\pixelscene{3.5}{5.5}\hspace{5mm}\pixelscene{7.5}{5.5}
+				\par\vspace{-0.45mm}
 			\end{block}
-		\end{column}
-		\begin{column}{0.47\textwidth}
+			\smallskip
+			\onslide<2->
 			\begin{block}{Gene expression}
 				\begin{itemize}
 					\item More than 20{,}000 human genes are measured per cell.
@@ -58,118 +110,162 @@
 			\end{block}
 		\end{column}
 	\end{columns}
-	\bigskip
-	Classical causal structure learning assumes that the causal variables are observed.\\[1mm]
-	Here they are not: \alert{the causal variables have to be learned}.
+	\vfill\vfill
+	\onslide<3->
+	{\centering Causal variables need to be \textbf{learned from data} instead of taken for granted.\par}
+	\vfill
 \end{frame}
 
 \begin{frame}{Causal disentanglement}
-	\framesubtitle{Also called causal representation learning}
-	\begin{columns}[onlytextwidth]
-		\begin{column}{0.52\textwidth}
-			\centering
-			\begin{tikzpicture}[node distance=6mm and 7mm]
-				\node[lat] (u1) {$U_1$};
-				\node[lat,below left=of u1] (u2) {$U_2$};
-				\node[lat,below right=of u1] (u4) {$U_4$};
-				\node[lat,below right=of u2] (u3) {$U_3$};
-				\draw[arr] (u1) -- (u2); \draw[arr] (u1) -- (u4); \draw[arr] (u2) -- (u3); \draw[arr] (u2) -- (u4);
-				\node[draw,dashed,rounded corners,fit=(u1)(u2)(u3)(u4),inner sep=2mm,label={[lbl]above:latent DAG $\G$}] (box) {};
-				\node[trapezium,draw,fill=ETHBlue!15,shape border rotate=270,minimum height=8mm,minimum width=16mm,right=6mm of box] (f) {$f$};
-				\node[draw,fill=ETHGray!15,minimum width=12mm,minimum height=22mm,right=6mm of f,label={[lbl]above:observed $X$}] (x) {};
-				\foreach \y in {-8,-4,0,4,8} \draw[ETHGray!60] ($(x.west)+(0,\y mm)$) -- ($(x.east)+(0,\y mm)$);
-				\draw[arr] (box) -- (f); \draw[arr] (f) -- (x);
-			\end{tikzpicture}
-		\end{column}
-		\begin{column}{0.46\textwidth}
-			\begin{itemize}
-				\item A few latent variables $U$, related by an unknown DAG $\G$.
-				\item An unknown mixing function $f$ maps them to what we observe.
-				\item Goal: recover the latent variables \emph{and} their causal graph from samples of $X$ only.
-			\end{itemize}
-		\end{column}
-	\end{columns}
-\end{frame}
-
-\begin{frame}{Why interventions: single-cell perturbation screens}
+	\begin{center}
+		\begin{tikzpicture}[node distance=6mm and 7mm]
+			\node[lat] (u1) {$U_1$};
+			\node[lat,below left=of u1] (u2) {$U_2$};
+			\node[lat,below right=of u1] (u4) {$U_4$};
+			\node[lat,below right=of u2] (u3) {$U_3$};
+			\draw[arr] (u1) -- (u2); \draw[arr] (u1) -- (u4); \draw[arr] (u2) -- (u3); \draw[arr] (u2) -- (u4);
+			\node[draw,dashed,rounded corners,fit=(u1)(u2)(u3)(u4),inner sep=2mm,label={[lbl]above:latent DAG $\G$}] (box) {};
+			\node[trapezium,draw,fill=ETHBlue!15,shape border rotate=270,minimum height=8mm,minimum width=16mm,right=9mm of box,visible on=<2->,label={[lbl,label distance=2.5mm,visible on=<2->]above:mixing\\function}] (f) {$f$};
+			\node[draw,fill=ETHGray!15,minimum width=12mm,minimum height=22mm,right=9mm of f,visible on=<2->,label={[lbl,visible on=<2->]above:observed $X$}] (x) {};
+			\foreach \y in {-8,-4,0,4,8} \draw[ETHGray!60,visible on=<2->] ($(x.west)+(0,\y mm)$) -- ($(x.east)+(0,\y mm)$);
+			\draw[arr,visible on=<2->] (box) -- (f); \draw[arr,visible on=<2->] (f) -- (x);
+			\draw[visible on=<3->,-{Stealth[length=2mm]},thick,dashed,ETHRed] (x.south) to[bend left=22] node[lbl,below,text=ETHRed] {recover} (box.south);
+		\end{tikzpicture}
+	\end{center}
 	\begin{itemize}
-		\item CRISPR screens (Perturb-seq) perturb one or several genes and read out the expression of every cell.
-		\item This gives one dataset per perturbation, next to the unperturbed cells.
-		\item Sequencing destroys the cell, so each cell is seen under \emph{one} condition only: the data are \alert{unpaired}.
-		\item A CRISPR activation does not fix a gene to a value. It changes how the gene responds to its regulators: a \alert{soft} intervention.
+		\item<1-> A few latent variables $U$, related by an unknown directed acyclic graph (DAG) $\G$.
+		\item<2-> An unknown mixing function $f$ maps them to what we observe.
+		\item<3-> Goal: recover the latent variables \emph{and} their causal graph from samples of $X$.
 	\end{itemize}
-	\bigskip
-	\begin{block}{What we want in the end}
-		Find the gene programs and how they regulate each other, and predict the effect of perturbation \emph{combinations} that were never measured.
-	\end{block}
 \end{frame}
 
-\begin{frame}{Two papers, one question}
-	\begin{block}{Question}
-		When do interventions make the latent causal model identifiable, and how do we learn it in practice?
-	\end{block}
-	\medskip
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\textbf{Additional paper}\\
-			von K\"ugelgen et al., \emph{Nonparametric Identifiability of Causal Representations from Unknown Interventions}, 2023
-			\begin{itemize}
-				\item No assumption on the mixing or the mechanisms.
-				\item Needs \emph{hard} interventions.
-			\end{itemize}
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\textbf{Main paper}\\
-			Zhang et al., \emph{Identifiability Guarantees for Causal Disentanglement from Soft Interventions}, 2023
-			\begin{itemize}
-				\item Polynomial mixing.
-				\item Works with \emph{soft} interventions, and comes with an algorithm.
-			\end{itemize}
-		\end{column}
-	\end{columns}
+\begin{frame}{Observing is not enough}
+	\vspace*{-3mm}
+	\begin{center}
+	\begin{tikzpicture}[
+			hid/.style={lat,dashed,draw=black!45,text=black!55},
+			hit/.style={draw=ETHRed,text=ETHRed,very thick},
+			harr/.style={-{Stealth[length=2mm]},thick,black!40}]
+		\begin{scope}[xshift=0mm]
+			\node[lbl] at (4mm,27mm) {\textbf{Model A}};
+			% hidden latents
+			\node[hid,alt=<2->{hit}{}] (u1) at (-4mm,17mm) {$U_1$};
+			\node[hid] (u2) at (12mm,17mm) {$U_2$};
+			\draw[harr] (u1) -- (u2);
+			\node[draw=black!30,dashed,rounded corners,fit=(u1)(u2),inner sep=1.5mm,label={[lbl,text=black!45]right:hidden}] (box) {};
+			\draw[arr,black!35] (box.south) -- node[lbl,right,text=black!45] {$f$} (4mm,6mm);
+			% what we observe: samples of X
+			\draw[black!50,-{Stealth[length=1.2mm]}] (-9mm,-13mm) -- (20mm,-13mm) node[lbl,below left,text=black!60] {$X_1$};
+			\draw[black!50,-{Stealth[length=1.2mm]}] (-9mm,-13mm) -- (-9mm,4mm) node[lbl,below right,text=black!60] {$X_2$};
+			\begin{scope}[yshift=-6mm,xshift=-1mm]
+				\fill[ETHGray!70] (-0.59mm,0.49mm) circle (0.5mm); \fill[ETHGray!70] (-0.52mm,-0.74mm) circle (0.5mm); \fill[ETHGray!70] (-2.14mm,-1.38mm) circle (0.5mm); \fill[ETHGray!70] (2.56mm,1.91mm) circle (0.5mm); \fill[ETHGray!70] (2.38mm,1.56mm) circle (0.5mm); \fill[ETHGray!70] (0.91mm,0.73mm) circle (0.5mm); \fill[ETHGray!70] (-3.83mm,-0.60mm) circle (0.5mm); \fill[ETHGray!70] (1.16mm,1.34mm) circle (0.5mm); \fill[ETHGray!70] (-3.89mm,-4.50mm) circle (0.5mm); \fill[ETHGray!70] (-2.05mm,-1.73mm) circle (0.5mm); \fill[ETHGray!70] (0.70mm,0.28mm) circle (0.5mm); \fill[ETHGray!70] (1.20mm,-0.38mm) circle (0.5mm); \fill[ETHGray!70] (0.71mm,0.95mm) circle (0.5mm); \fill[ETHGray!70] (-1.52mm,1.86mm) circle (0.5mm); \fill[ETHGray!70] (1.28mm,2.45mm) circle (0.5mm); \fill[ETHGray!70] (-1.43mm,-1.83mm) circle (0.5mm); \fill[ETHGray!70] (-0.79mm,-0.55mm) circle (0.5mm); \fill[ETHGray!70] (1.45mm,1.10mm) circle (0.5mm); \fill[ETHGray!70] (-1.03mm,-1.96mm) circle (0.5mm); \fill[ETHGray!70] (-1.20mm,1.26mm) circle (0.5mm); \fill[ETHGray!70] (-1.86mm,-0.55mm) circle (0.5mm); \fill[ETHGray!70] (0.98mm,-1.78mm) circle (0.5mm); \fill[ETHGray!70] (0.11mm,2.04mm) circle (0.5mm); \fill[ETHGray!70] (-4.63mm,-2.79mm) circle (0.5mm);
+				\begin{scope}[visible on=<2->]
+					\fill[ETHRed!80] (9.41mm,6.49mm) circle (0.5mm); \fill[ETHRed!80] (9.48mm,5.26mm) circle (0.5mm); \fill[ETHRed!80] (7.86mm,4.62mm) circle (0.5mm); \fill[ETHRed!80] (12.56mm,7.91mm) circle (0.5mm); \fill[ETHRed!80] (12.38mm,7.56mm) circle (0.5mm); \fill[ETHRed!80] (10.91mm,6.73mm) circle (0.5mm); \fill[ETHRed!80] (6.17mm,5.40mm) circle (0.5mm); \fill[ETHRed!80] (11.16mm,7.34mm) circle (0.5mm); \fill[ETHRed!80] (6.11mm,1.50mm) circle (0.5mm); \fill[ETHRed!80] (7.95mm,4.27mm) circle (0.5mm); \fill[ETHRed!80] (10.70mm,6.28mm) circle (0.5mm); \fill[ETHRed!80] (11.20mm,5.62mm) circle (0.5mm); \fill[ETHRed!80] (10.71mm,6.95mm) circle (0.5mm); \fill[ETHRed!80] (8.48mm,7.86mm) circle (0.5mm); \fill[ETHRed!80] (11.28mm,8.45mm) circle (0.5mm); \fill[ETHRed!80] (8.57mm,4.17mm) circle (0.5mm); \fill[ETHRed!80] (9.21mm,5.45mm) circle (0.5mm); \fill[ETHRed!80] (11.45mm,7.10mm) circle (0.5mm); \fill[ETHRed!80] (8.97mm,4.04mm) circle (0.5mm); \fill[ETHRed!80] (8.80mm,7.26mm) circle (0.5mm); \fill[ETHRed!80] (8.14mm,5.45mm) circle (0.5mm); \fill[ETHRed!80] (10.98mm,4.22mm) circle (0.5mm); \fill[ETHRed!80] (10.11mm,8.04mm) circle (0.5mm); \fill[ETHRed!80] (5.37mm,3.21mm) circle (0.5mm);
+					\draw[-{Stealth[length=2mm]},ETHRed!70!black,very thick] (0,0) -- (8.50mm,5.10mm);
+				\end{scope}
+			\end{scope}
+		\end{scope}
+		\begin{scope}[xshift=84mm]
+			\node[lbl] at (4mm,27mm) {\textbf{Model B}};
+			% hidden latents
+			\node[hid,alt=<2->{hit}{}] (u1) at (-4mm,17mm) {$U_1$};
+			\node[hid] (u2) at (12mm,17mm) {$U_2$};
+			\draw[harr] (u2) -- (u1);
+			\node[draw=black!30,dashed,rounded corners,fit=(u1)(u2),inner sep=1.5mm,label={[lbl,text=black!45]right:hidden}] (box) {};
+			\draw[arr,black!35] (box.south) -- node[lbl,right,text=black!45] {$f$} (4mm,6mm);
+			% what we observe: samples of X
+			\draw[black!50,-{Stealth[length=1.2mm]}] (-9mm,-13mm) -- (20mm,-13mm) node[lbl,below left,text=black!60] {$X_1$};
+			\draw[black!50,-{Stealth[length=1.2mm]}] (-9mm,-13mm) -- (-9mm,4mm) node[lbl,below right,text=black!60] {$X_2$};
+			\begin{scope}[yshift=-6mm,xshift=-1mm]
+				\fill[ETHGray!70] (-0.59mm,0.49mm) circle (0.5mm); \fill[ETHGray!70] (-0.52mm,-0.74mm) circle (0.5mm); \fill[ETHGray!70] (-2.14mm,-1.38mm) circle (0.5mm); \fill[ETHGray!70] (2.56mm,1.91mm) circle (0.5mm); \fill[ETHGray!70] (2.38mm,1.56mm) circle (0.5mm); \fill[ETHGray!70] (0.91mm,0.73mm) circle (0.5mm); \fill[ETHGray!70] (-3.83mm,-0.60mm) circle (0.5mm); \fill[ETHGray!70] (1.16mm,1.34mm) circle (0.5mm); \fill[ETHGray!70] (-3.89mm,-4.50mm) circle (0.5mm); \fill[ETHGray!70] (-2.05mm,-1.73mm) circle (0.5mm); \fill[ETHGray!70] (0.70mm,0.28mm) circle (0.5mm); \fill[ETHGray!70] (1.20mm,-0.38mm) circle (0.5mm); \fill[ETHGray!70] (0.71mm,0.95mm) circle (0.5mm); \fill[ETHGray!70] (-1.52mm,1.86mm) circle (0.5mm); \fill[ETHGray!70] (1.28mm,2.45mm) circle (0.5mm); \fill[ETHGray!70] (-1.43mm,-1.83mm) circle (0.5mm); \fill[ETHGray!70] (-0.79mm,-0.55mm) circle (0.5mm); \fill[ETHGray!70] (1.45mm,1.10mm) circle (0.5mm); \fill[ETHGray!70] (-1.03mm,-1.96mm) circle (0.5mm); \fill[ETHGray!70] (-1.20mm,1.26mm) circle (0.5mm); \fill[ETHGray!70] (-1.86mm,-0.55mm) circle (0.5mm); \fill[ETHGray!70] (0.98mm,-1.78mm) circle (0.5mm); \fill[ETHGray!70] (0.11mm,2.04mm) circle (0.5mm); \fill[ETHGray!70] (-4.63mm,-2.79mm) circle (0.5mm);
+				\begin{scope}[visible on=<2->]
+					\fill[ETHRed!80] (9.41mm,0.49mm) circle (0.5mm); \fill[ETHRed!80] (9.48mm,-0.74mm) circle (0.5mm); \fill[ETHRed!80] (7.86mm,-1.38mm) circle (0.5mm); \fill[ETHRed!80] (12.56mm,1.91mm) circle (0.5mm); \fill[ETHRed!80] (12.38mm,1.56mm) circle (0.5mm); \fill[ETHRed!80] (10.91mm,0.73mm) circle (0.5mm); \fill[ETHRed!80] (6.17mm,-0.60mm) circle (0.5mm); \fill[ETHRed!80] (11.16mm,1.34mm) circle (0.5mm); \fill[ETHRed!80] (6.11mm,-4.50mm) circle (0.5mm); \fill[ETHRed!80] (7.95mm,-1.73mm) circle (0.5mm); \fill[ETHRed!80] (10.70mm,0.28mm) circle (0.5mm); \fill[ETHRed!80] (11.20mm,-0.38mm) circle (0.5mm); \fill[ETHRed!80] (10.71mm,0.95mm) circle (0.5mm); \fill[ETHRed!80] (8.48mm,1.86mm) circle (0.5mm); \fill[ETHRed!80] (11.28mm,2.45mm) circle (0.5mm); \fill[ETHRed!80] (8.57mm,-1.83mm) circle (0.5mm); \fill[ETHRed!80] (9.21mm,-0.55mm) circle (0.5mm); \fill[ETHRed!80] (11.45mm,1.10mm) circle (0.5mm); \fill[ETHRed!80] (8.97mm,-1.96mm) circle (0.5mm); \fill[ETHRed!80] (8.80mm,1.26mm) circle (0.5mm); \fill[ETHRed!80] (8.14mm,-0.55mm) circle (0.5mm); \fill[ETHRed!80] (10.98mm,-1.78mm) circle (0.5mm); \fill[ETHRed!80] (10.11mm,2.04mm) circle (0.5mm); \fill[ETHRed!80] (5.37mm,-2.79mm) circle (0.5mm);
+					\draw[-{Stealth[length=2mm]},ETHRed!70!black,very thick] (0,0) -- (8.50mm,0.00mm);
+				\end{scope}
+			\end{scope}
+		\end{scope}
+		% comparison between the two models
+		\node[font=\small,visible on=<1>] at (47mm,-6mm) {same data};
+		\node[font=\small,visible on=<2->,text=ETHRed] at (47mm,-6mm) {different data};
+		\node[lbl,visible on=<2->,text=ETHRed] at (47mm,17mm) {intervene\\on $U_1$};
+	\end{tikzpicture}
+	\end{center}
+	\vspace*{-2mm}
+	\begin{itemize}
+		\item<1-> We only observe $X$, and without interventions both models produce the same data.
+		\item<2-> Intervening on $U_1$ shifts the data differently: in model A the change reaches $U_2$, in B it does not.
+		\item<3-> To recover the hidden graph, we need to \textbf{see how $X$ responds to interventions}.
+	\end{itemize}
 \end{frame}
 
-%======================================================================
-\section{Problem setup \hfill {\normalsize Joan}}
-%======================================================================
-
-\begin{frame}{Data-generating process}
+\begin{frame}{Problem setup}
 	\[
 		X = f(U), \qquad U \sim \PP_U = \prod_{i=1}^{p} \PP\big(U_i \mid U_{\pa_\G(i)}\big)
 	\]
-	\begin{itemize}
-		\item $X = (X_1,\dots,X_n)$: observed variables, e.g.\ the expression of $n$ genes.
-		\item $U = (U_1,\dots,U_p)$: latent causal variables, with $p \ll n$ in practice.
-		\item $\G$: unknown DAG on $\{1,\dots,p\}$; $\PP_U$ factorizes according to $\G$.
-		\item $f$: unknown deterministic mixing function, possibly non-linear.
-	\end{itemize}
-	\bigskip
+	\begin{columns}[onlytextwidth,c]
+		\begin{column}{0.56\textwidth}
+			\begin{itemize}
+				\item $X = (X_1,\dots,X_n)$: observed variables.
+				\item $U = (U_1,\dots,U_p)$: latent causal variables.
+				\item $\G$: DAG on $\{1,\dots,p\}$.
+				\item $f\colon \mathbb{R}^p \to \mathbb{R}^n$: deterministic mixing function.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.42\textwidth}
+			\centering
+			\uncover<3->{\includegraphics[width=0.9\textwidth]{figures/zh_fig1}}
+		\end{column}
+	\end{columns}
+	\medskip
+	\onslide<2->
 	\begin{block}{Unknown}
 		The latent variables $U$, their number $p$, the graph $\G$, the mixing $f$, and which latent each intervention targets.
 	\end{block}
+	\onslide<3->
+	\src{Figure: Zhang et al., 2023, Fig.\ 1.}
 \end{frame}
 
-\begin{frame}{What does ``identifiable'' mean?}
+\begin{frame}{Can we learn the latent model from the data?}
 	\begin{itemize}
-		\item A latent model is \alert{identifiable} if it is the only one that explains the distribution of the data.
-		\item All statements are for the infinite-data regime: the distributions of $X$ are known exactly.
-		\item Uniqueness is never literal. Two changes can always be absorbed by the mixing $f$:
+		\item<1-> If no other latent model explains the data equally well, the model is \textbf{identifiable}.
+		\item<2-> Some changes can never be detected, because $f$ can absorb them:
 		\begin{itemize}
-			\item relabeling the latent variables (a permutation);
-			\item rescaling each latent variable.
+			\item a permutation of the latents (e.g.\ $U_1 \leftrightarrow U_2$);
+			\item an affine transform of the latent variables (e.g.\ $U_i \to 2U_i$).
 		\end{itemize}
-		\item So the best possible result is identifiability \alert{up to an equivalence class}.
+		\item<2-> So the best possible result is identifiability \textbf{up to an equivalence class}.
 	\end{itemize}
-	\bigskip
-	The two papers differ in how large this class is, and in what they assume to reach it.
+	\medskip
+	\begin{center}
+	\begin{tikzpicture}[obs/.style={draw,fill=ETHGray!15,minimum width=14mm,minimum height=8mm,font=\footnotesize}]
+		\begin{scope}[visible on=<3->]
+		% original model
+		\node[lbl] at (9mm,10mm) {\textbf{a model}};
+		\node[lat] (a1) at (0,0) {$U_1$};
+		\node[lat] (a2) at (18mm,0) {$U_2$};
+		\draw[arr] (a1) -- (a2);
+		\node[draw,dashed,rounded corners,fit=(a1)(a2),inner sep=1.5mm] (A) {};
+		% the data
+		\node[obs] (x) at (52mm,0) {$X$};
+		\end{scope}
+		\node[lbl,below=1mm of x,visible on=<4->] {same data};
+		\begin{scope}[visible on=<4->]
+		% relabeled and rescaled model
+		\node[lbl] at (95mm,10mm) {\textbf{relabeled and rescaled}};
+		\node[lat] (b2) at (86mm,0) {$\tilde U_2$};
+		\node[lat] (b1) at (104mm,0) {$\tilde U_1$};
+		\draw[arr] (b2) -- (b1);
+		\node[draw,dashed,rounded corners,fit=(b1)(b2),inner sep=1.5mm] (B) {};
+		\node[lbl,below=1.5mm of B] {$\tilde U_1 = 2\,U_2,\quad \tilde U_2 = U_1$};
+		\draw[arr] (B) -- node[lbl,above] {$\tilde f$} (x);
+		\end{scope}
+		\draw[arr,visible on=<3->] (A) -- node[lbl,above] {$f$} (x);
+	\end{tikzpicture}
+	\end{center}
 \end{frame}
 
-%======================================================================
-\section{Setup shared by both papers \hfill {\normalsize Francesco}}
-%======================================================================
-
-\begin{frame}{Hard and soft interventions}
-	An intervention $I$ with target $i$ changes one conditional $\PP(U_i \mid U_{\pa(i)})$ and leaves all others untouched.
+\begin{frame}{What does an intervention do?}
+	An intervention $I$ with target $i$ changes one conditional probability, $\PP(U_i \mid U_{\pa(i)})$, while all the others stay the same.
 	\medskip
 	\begin{center}
 	\begin{tikzpicture}
@@ -179,27 +275,59 @@
 			\node[lbl,above=5mm of $(a)!0.5!(b)$] {\textbf{Observational}};
 			\node[lbl,below=5mm of $(a)!0.5!(b)$] {$\PP(U_2 \mid U_1)$};
 		\end{scope}
-		\begin{scope}[xshift=45mm]
+		\begin{scope}[xshift=45mm,visible on=<2->]
 			\node[lat] (a) {$U_1$}; \node[intv,right=12mm of a] (b) {$U_2$};
-			\draw[gone] (a) -- (b);
 			\node[lbl,above=5mm of $(a)!0.5!(b)$] {\textbf{Hard} (perfect)};
 			\node[lbl,below=5mm of $(a)!0.5!(b)$] {\red{$\PP^I(U_2)$}};
 		\end{scope}
-		\begin{scope}[xshift=90mm]
+		\begin{scope}[xshift=90mm,visible on=<3->]
 			\node[lat] (a) {$U_1$}; \node[intv,right=12mm of a] (b) {$U_2$};
-			\draw[arr] (a) -- (b);
+			\draw[gone] (a) -- (b);
 			\node[lbl,above=5mm of $(a)!0.5!(b)$] {\textbf{Soft} (imperfect)};
 			\node[lbl,below=5mm of $(a)!0.5!(b)$] {\red{$\PP^I(U_2 \mid U_1)$}};
 		\end{scope}
 	\end{tikzpicture}
 	\end{center}
 	\begin{itemize}
-		\item \textbf{Hard}: the target no longer depends on its parents.
-		\item \textbf{Soft}: the dependence stays, the mechanism changes. Hard is a special case.
-		\item Example of a soft intervention, a shift by $a_i$: \quad $\PP^I(U_i = u + a_i \mid U_{\pa(i)}) = \PP(U_i = u \mid U_{\pa(i)})$.
-		\item Both papers use \emph{single-node} (atomic) interventions.
+		\item<2-> \textbf{Hard}: the target no longer depends on its parents.
+		\item<3-> \textbf{Soft}: changes the mechanism of the dependency (hard is a special case).
+		\begin{itemize}
+			\item Example, a shift by $a_i$: \quad $\PP^I(U_i = u + a_i \mid U_{\pa(i)}) = \PP(U_i = u \mid U_{\pa(i)})$.
+		\end{itemize}
+		\item<4-> Each intervention targets a single latent variable: \emph{atomic} interventions.
 	\end{itemize}
 \end{frame}
+
+\begin{frame}{The question of this talk}
+	\begin{block}{Question}
+		Real perturbations are soft. Can they still reveal the latent causal model?
+	\end{block}
+	\medskip
+	\begin{columns}[onlytextwidth,t]
+		\begin{column}{0.47\textwidth}
+			\onslide<2->
+			\textbf{Additional paper}\\
+			von K\"ugelgen et al., \emph{Nonparametric Identifiability of Causal Representations from Unknown Interventions}, 2023
+			\begin{itemize}
+				\item No assumption on the mixing function.
+				\item Needs \emph{hard} interventions.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.47\textwidth}
+			\onslide<3->
+			\textbf{Main paper}\\
+			Zhang et al., \emph{Identifiability Guarantees for Causal Disentanglement from Soft Interventions}, 2023
+			\begin{itemize}
+				\item Polynomial mixing function.
+				\item Extends the theory to \emph{soft} interventions, and proposes a method to learn the model.
+			\end{itemize}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+%======================================================================
+\section{Setup shared by both papers \hfill {\normalsize Francesco}}
+%======================================================================
 
 \begin{frame}{The data: unpaired environments with unknown targets}
 	\begin{columns}[onlytextwidth]
@@ -572,6 +700,20 @@
 %======================================================================
 \section{Main paper: identifiability from soft interventions \hfill {\normalsize Joan}}
 %======================================================================
+
+% TODO (Joan): adapt this slide to the main-paper section
+\begin{frame}{Why interventions: single-cell perturbation screens}
+	\begin{itemize}
+		\item CRISPR screens (Perturb-seq) perturb one or several genes and read out the expression of every cell.
+		\item This gives one dataset per perturbation, next to the unperturbed cells.
+		\item Sequencing destroys the cell, so each cell is seen under \emph{one} condition only: the data are \alert{unpaired}.
+		\item A CRISPR activation does not fix a gene to a value. It changes how the gene responds to its regulators: a \alert{soft} intervention.
+	\end{itemize}
+	\bigskip
+	\begin{block}{What we want in the end}
+		Find the gene programs and how they regulate each other, and predict the effect of perturbation \emph{combinations} that were never measured.
+	\end{block}
+\end{frame}
 
 \begin{frame}{The model: polynomial mixing, soft interventions}
 	\begin{columns}[onlytextwidth,t]
