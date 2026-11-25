@@ -7,6 +7,8 @@
 \institute{ETH Zurich}
 
 \usetheme{eth}
+\usepackage{array}
+\usepackage{multirow}
 
 \colorlet{titlefgcolor}{ETHBlue}
 \colorlet{accentcolor}{ETHBlue}
@@ -329,34 +331,66 @@
 \section{Setup shared by both papers \hfill {\normalsize Francesco}}
 %======================================================================
 
-\begin{frame}{The data: unpaired environments with unknown targets}
-	\begin{columns}[onlytextwidth]
-		\begin{column}{0.56\textwidth}
-			We observe samples of $X$ from
+\begin{frame}{From independent components to causal variables}
+	\begin{columns}[onlytextwidth,t]
+		\begin{column}{0.47\textwidth}
+			\centering
+			\textbf{Nonlinear ICA}\\[2mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$S_1$}; \node[lat,right=5mm of a] (b) {$S_2$}; \node[lat,right=5mm of b] (c) {$S_3$};
+				\node[draw,dashed,rounded corners,fit=(a)(c),inner sep=1.5mm] (box) {};
+				\node[trapezium,draw,fill=ETHBlue!15,shape border rotate=270,minimum height=6mm,minimum width=11mm,right=5mm of box] (f) {\scriptsize$f$};
+				\node[draw,fill=ETHGray!15,minimum width=8mm,minimum height=7mm,right=5mm of f,font=\scriptsize] (x) {$X$};
+				\draw[arr] (box) -- (f); \draw[arr] (f) -- (x);
+			\end{tikzpicture}
 			\[
-				\D,\ \D^{I_1},\ \dots,\ \D^{I_K}
+				X = f(S), \qquad p(s) = \prod_i p(s_i)
 			\]
-			one observational dataset and one per intervention.
+			Independent sources: \alert{no edges}.\\
+			Goal: recover the sources.
+		\end{column}
+		\begin{column}{0.47\textwidth}
+			\centering
+			\textbf{Causal representation learning}\\[2mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,right=5mm of a] (b) {$U_2$}; \node[lat,right=5mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
+				\node[draw,dashed,rounded corners,fit=(a)(c),inner sep=1.5mm] (box) {};
+				\node[trapezium,draw,fill=ETHBlue!15,shape border rotate=270,minimum height=6mm,minimum width=11mm,right=5mm of box] (f) {\scriptsize$f$};
+				\node[draw,fill=ETHGray!15,minimum width=8mm,minimum height=7mm,right=5mm of f,font=\scriptsize] (x) {$X$};
+				\draw[arr] (box) -- (f); \draw[arr] (f) -- (x);
+			\end{tikzpicture}
+			\[
+				X = f(U), \qquad p(u) = \prod_i p\big(u_i \mid u_{\pa(i)}\big)
+			\]
+			Dependent latents: a DAG $\G$.\\
+			Goal: recover the latents \emph{and} $\G$.
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Multi-environment data: the environments}
+	\framesubtitle{The same system under several experimental conditions: $X^e = f(U^e),\ e \in \mathcal{E}$}
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.5\textwidth}
+			An \textbf{environment} is one experimental condition. Each gives its own dataset of samples of $X$.
 			\begin{itemize}
-				\item \textbf{Shared}: the mixing $f$ and every mechanism that is not targeted.
-				\[
-					\PP^{I}_U = \red{\PP^{I}\big(U_i \mid U_{\pa(i)}\big)} \prod_{j \neq i} \PP\big(U_j \mid U_{\pa(j)}\big)
-				\]
-				\item \textbf{Unpaired}: no sample is seen before \emph{and} after an intervention.
-				\item \textbf{Unknown targets}: we know which dataset a sample belongs to, not which latent was changed.
+				\item $e_0$: \textbf{observational}. The system is left alone.
+				\item $e_1, e_2, \dots$: \textbf{interventional}. One latent mechanism is changed in each.
 			\end{itemize}
 		\end{column}
-		\begin{column}{0.4\textwidth}
+		\begin{column}{0.46\textwidth}
 			\centering
 			\begin{tikzpicture}[node distance=4mm]
-				\foreach \k/\lab/\col in {0/$\D$/black,1/$\D^{I_1}$/ETHRed,2/$\D^{I_2}$/ETHRed}{
-					\begin{scope}[yshift=-\k*17mm]
+				\foreach \k/\lab in {0/observational,1/intervention 1,2/intervention 2}{
+					\begin{scope}[yshift=-\k*19mm]
 						\node[lat,minimum size=5.5mm] (a\k) {\tiny$U_1$};
-						\node[lat,minimum size=5.5mm,right=6mm of a\k] (b\k) {\tiny$U_2$};
+						\node[lat,minimum size=5.5mm,right=5mm of a\k] (b\k) {\tiny$U_2$};
 						\draw[arr] (a\k) -- (b\k);
 						\node[trapezium,draw,fill=ETHBlue!15,shape border rotate=270,minimum height=5mm,minimum width=9mm,right=5mm of b\k] (f\k) {\scriptsize$f$};
-						\node[right=5mm of f\k,font=\scriptsize,text=\col] (x\k) {\lab};
+						\node[draw,fill=ETHGray!15,minimum width=11mm,minimum height=7mm,right=5mm of f\k,font=\scriptsize] (x\k) {$X^{e_\k}$};
 						\draw[arr] (b\k) -- (f\k); \draw[arr] (f\k) -- (x\k);
+						\node[lbl,anchor=west] at ([yshift=7.5mm]a\k.west) {$e_\k$: \lab};
 					\end{scope}
 				}
 				\node[intv,minimum size=5.5mm] at (a1) {\tiny$U_1$};
@@ -366,101 +400,347 @@
 	\end{columns}
 \end{frame}
 
-\begin{frame}{Faithfulness: the graph can be read from the distribution}
+\begin{frame}{Multi-environment data: unpaired samples}
+	\framesubtitle{The same system under several experimental conditions: $X^e = f(U^e),\ e \in \mathcal{E}$}
 	\begin{columns}[onlytextwidth]
-		\begin{column}{0.6\textwidth}
+		\begin{column}{0.5\textwidth}
 			\begin{itemize}
-				\item \textbf{Markov}: every separation in $\G$ gives a conditional independence in $\PP_U$. This is the factorization.
-				\item \textbf{Faithfulness}: the converse. The \emph{only} conditional independences in $\PP_U$ are those implied by $\G$.
-				\item It excludes exact cancellations. On the right, with $c = -ab$ the two paths cancel and $U_1 \perp\!\!\!\perp U_3$, although $U_1$ causes $U_3$.
-				\item Such cancellations need fine-tuned parameters, so faithfulness is a genericity assumption.
+				\item \textbf{Unpaired samples}: no unit is seen in two environments.
 			\end{itemize}
 		\end{column}
-		\begin{column}{0.36\textwidth}
+		\begin{column}{0.46\textwidth}
 			\centering
-			\begin{tikzpicture}[node distance=9mm and 9mm]
+			\begin{tikzpicture}
+				\node[lbl] at (9mm,20mm) {\textbf{paired}\\(not available)};
+				\foreach \y in {0,5,10}{
+					\fill[ETHGray] (0,\y mm) circle (0.9mm); \fill[ETHRed] (18mm,\y mm+2mm) circle (0.9mm);
+					\draw[black!50] (0,\y mm) -- (18mm,\y mm+2mm);
+				}
+				\draw[ETHRed,very thick] (-3mm,-3mm) -- (21mm,15mm);
+				\draw[ETHRed,very thick] (-3mm,15mm) -- (21mm,-3mm);
+				\begin{scope}[xshift=32mm]
+					\node[lbl] at (9mm,20mm) {\textbf{unpaired}\\(our data)};
+					\foreach \x/\y in {0/0,2/6,-2/10,3/3}{ \fill[ETHGray] (\x mm,\y mm) circle (0.9mm); }
+					\foreach \x/\y in {17/1,19/8,15/5,20/11}{ \fill[ETHRed] (\x mm,\y mm) circle (0.9mm); }
+					\node[lbl] at (0,-5mm) {control}; \node[lbl,text=ETHRed] at (18mm,-5mm) {perturbed};
+				\end{scope}
+			\end{tikzpicture}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Multi-environment data: known environment label}
+	\framesubtitle{The same system under several experimental conditions: $X^e = f(U^e),\ e \in \mathcal{E}$}
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+				\item \textbf{Known environment label}: we know which experiment produced each sample.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.46\textwidth}
+			\centering
+			\begin{tikzpicture}[ds/.style={draw,fill=ETHGray!15,minimum width=30mm,minimum height=8mm,font=\footnotesize}]
+				\node[ds] (d0) {samples of $X^{e_0}$};
+				\node[ds,below=3mm of d0] (d1) {samples of $X^{e_1}$};
+				\node[ds,below=3mm of d1] (d2) {samples of $X^{e_2}$};
+				\node[lbl,left=2mm of d0] {control}; \node[lbl,left=2mm of d1,text=ETHRed] {gene A activated}; \node[lbl,left=2mm of d2,text=ETHRed] {gene B activated};
+			\end{tikzpicture}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Multi-environment data: unknown latent target}
+	\framesubtitle{The same system under several experimental conditions: $X^e = f(U^e),\ e \in \mathcal{E}$}
+	\begin{itemize}
+		\item \textbf{Unknown latent target}: we do not know which latent variable the experiment changes.
+	\end{itemize}
+	\medskip
+	\begin{center}
+		{\scriptsize
+		\renewcommand{\arraystretch}{1.3}
+		\begin{tabular}{@{}c c cccc l l@{}}
+			\toprule
+			& & \multicolumn{4}{c}{\textbf{observed} $X$ (gene expression)} & \textbf{known} & \textbf{hidden} \\
+			\cmidrule(lr){3-6}\cmidrule(lr){7-7}\cmidrule(l){8-8}
+			environment & cell & gene A & gene B & gene C & $\cdots$ & label $e$ & linked latent factor \\
+			\midrule
+			\multirow{2}{*}{$e_0$} & 1 & 0.2 & 0.3 & 0.1 & $\cdots$ & control & none \\
+			& 2 & 0.3 & 0.2 & 0.0 & $\cdots$ & control & none \\
+			\cmidrule(l){1-8}
+			\multirow{2}{*}{\red{$e_1$}} & 3 & \red{\textbf{2.1}} & 0.3 & \red{\textbf{0.9}} & $\cdots$ & gene A activated & \red{gene A $\leftrightarrow U_i$, \ $i = {?}$} \\
+			& 4 & \red{\textbf{1.8}} & 0.2 & \red{\textbf{1.2}} & $\cdots$ & gene A activated & \red{gene A $\leftrightarrow U_i$, \ $i = {?}$} \\
+			\cmidrule(l){1-8}
+			\multirow{2}{*}{\red{$e_2$}} & 5 & 0.2 & \red{\textbf{3.0}} & 0.1 & $\cdots$ & gene B activated & \red{gene B $\leftrightarrow U_j$, \ $j = {?}$} \\
+			& 6 & 0.3 & \red{\textbf{2.7}} & 0.0 & $\cdots$ & gene B activated & \red{gene B $\leftrightarrow U_j$, \ $j = {?}$} \\
+			\bottomrule
+		\end{tabular}}
+
+		\smallskip
+		{\tiny\textcolor{ETHGray}{Each row is one cell; an environment contains many cells. Made-up values, for illustration only.}}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Shared mechanisms: the same mixing}
+	\framesubtitle{The same system under several experimental conditions: $X^e = f(U^e),\ e \in \mathcal{E}$}
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.5\textwidth}
+			\begin{itemize}
+				\item \textbf{Shared mixing}: the same $f$ in every environment.
+			\end{itemize}
+		\end{column}
+		\begin{column}{0.46\textwidth}
+			\centering
+			\begin{tikzpicture}[node distance=4mm]
+				\foreach \k in {0,1,2}{
+					\begin{scope}[yshift=-\k*15mm]
+						\node[lat,minimum size=5.5mm] (a\k) {\tiny$U_1$};
+						\node[lat,minimum size=5.5mm,right=5mm of a\k] (b\k) {\tiny$U_2$};
+						\draw[arr] (a\k) -- (b\k);
+						\node[trapezium,draw=ETHBlue,very thick,fill=ETHBlue!15,shape border rotate=270,minimum height=5mm,minimum width=9mm,right=5mm of b\k] (f\k) {\scriptsize$f$};
+						\node[draw,fill=ETHGray!15,minimum width=11mm,minimum height=7mm,right=5mm of f\k,font=\scriptsize] (x\k) {$X^{e_\k}$};
+						\draw[arr] (b\k) -- (f\k); \draw[arr] (f\k) -- (x\k);
+					\end{scope}
+				}
+				\node[intv,minimum size=5.5mm] at (a1) {\tiny$U_1$};
+				\node[intv,minimum size=5.5mm] at (b2) {\tiny$U_2$};
+				\node[lbl,text=ETHBlue,above=1mm of f0] {same $f$};
+			\end{tikzpicture}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Shared mechanisms and single-node interventions}
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.3\textwidth}
+			\centering
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[intv,right=7mm of a] (b) {$U_2$}; \node[lat,right=7mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
+			\end{tikzpicture}
+		\end{column}
+		\begin{column}{0.68\textwidth}
+			\begin{align*}
+				p(u) &= p_1(u_1)\; p_2(u_2 \mid u_1)\; p_3(u_3 \mid u_2) \\[1mm]
+				p^e(u) &= p_1(u_1)\; \underbrace{\red{p_2^e(u_2 \mid u_1)}}_{\text{changed mechanism}}\; p_3(u_3 \mid u_2)
+			\end{align*}
+		\end{column}
+	\end{columns}
+	\bigskip
+	\begin{center}
+		One mechanism changes per intervention; all the others stay the same.\\[1mm]
+		Every latent node is targeted.
+	\end{center}
+\end{frame}
+
+\begin{frame}{What does identification mean?}
+	A candidate $(h, G')$: an encoder $Z = h(X)$ and a graph $G'$ that explain \emph{all} environments and satisfy the assumptions.
+	\begin{center}
+	\begin{tikzpicture}
+		% truth
+		\node[lat] (a) at (0,0) {$U_1$}; \node[lat] (b) at (14mm,0) {$U_2$};
+		\draw[arr] (a) -- (b);
+		\node[lbl] (ta) at (7mm,8mm) {\textbf{truth}};
+		\node[lbl] (ca) at (7mm,-9mm) {$(f^{-1}, G)$};
+		% equivalent candidate
+		\node[lat] (c) at (38mm,0) {$Z_2$}; \node[lat] (d) at (52mm,0) {$Z_1$};
+		\draw[arr] (c) -- (d);
+		\node[lbl,text=ETHBlue] (tb) at (45mm,8mm) {\textbf{renamed and rescaled}};
+		\node[lbl] (cb) at (45mm,-9mm) {$Z_2 = U_1,\ Z_1 = 2\,U_2$};
+		% wrong candidate
+		\node[lat,draw=ETHRed,text=ETHRed] (e) at (88mm,0) {$Z_1$}; \node[lat,draw=ETHRed,text=ETHRed] (g) at (102mm,0) {$Z_2$};
+		\draw[arr,ETHRed] (g) -- (e);
+		\node[lbl,text=ETHRed] (tc) at (95mm,8mm) {\textbf{latents mixed, arrow reversed}};
+		\node[lbl] (cc) at (95mm,-9mm) {$Z_1 = U_2,\ Z_2 = U_2 - U_1$};
+		% sets
+		\node[draw=ETHBlue,thick,rounded corners,fill=ETHBlue!8,fit=(a)(ta)(ca)(cb)(tb),inner sep=2.5mm] (inner) {};
+		\node[draw=black!60,thick,dashed,rounded corners,fit=(inner)(tc)(cc),inner xsep=4mm,inner ysep=7mm] (outer) {};
+		\node[lbl,text=ETHBlue,anchor=south west] at ([yshift=0.3mm]inner.north west) {equivalent to the truth};
+		\node[lbl,anchor=north east] at ([xshift=-1mm,yshift=-0.5mm]outer.north east) {all models that explain every environment};
+		% redraw content above the fill
+		\node[lat] at (a) {$U_1$}; \node[lat] at (b) {$U_2$}; \draw[arr] (a) -- (b);
+		\node[lat] at (c) {$Z_2$}; \node[lat] at (d) {$Z_1$}; \draw[arr] (c) -- (d);
+		\node[lbl] at (ta) {\textbf{truth}}; \node[lbl] at (ca) {$(f^{-1}, G)$};
+		\node[lbl,text=ETHBlue] at (tb) {\textbf{renamed and rescaled}}; \node[lbl] at (cb) {$Z_2 = U_1,\ Z_1 = 2\,U_2$};
+	\end{tikzpicture}
+	\end{center}
+	\begin{center}
+		\textbf{Identified}: once the assumptions are imposed, the two sets coincide. Recovery is up to equivalence.
+	\end{center}
+	A result states \textbf{what} is recovered and \textbf{up to which transformations}.
+\end{frame}
+
+\begin{frame}{Markov and faithfulness: d-separation (1/3)}
+	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{1. Chain}
+	\bigskip
+	\begin{columns}[onlytextwidth,t]
+		\begin{column}{0.47\textwidth}
+			\centering
+			No conditioning\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHGreen}{\textbf{path open}}
+		\end{column}
+		\begin{column}{0.47\textwidth}
+			\centering
+			Conditioning on $U_2$\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHRed}{\textbf{path blocked}}
+		\end{column}
+	\end{columns}
+	\bigskip
+	\begin{center}
+		A chain is blocked if $U_2 \in S$.
+	\end{center}
+\end{frame}
+
+\begin{frame}{Markov and faithfulness: d-separation (2/3)}
+	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{2. Fork}
+	\bigskip
+	\begin{columns}[onlytextwidth,t]
+		\begin{column}{0.47\textwidth}
+			\centering
+			No conditioning\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (b) -- (a); \draw[arr] (b) -- (c);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHGreen}{\textbf{path open}}
+		\end{column}
+		\begin{column}{0.47\textwidth}
+			\centering
+			Conditioning on $U_2$\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (b) -- (a); \draw[arr] (b) -- (c);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHRed}{\textbf{path blocked}}
+		\end{column}
+	\end{columns}
+	\bigskip
+	\begin{center}
+		A fork is blocked if $U_2 \in S$.
+	\end{center}
+\end{frame}
+
+\begin{frame}{Markov and faithfulness: d-separation (3/3)}
+	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{3. Collider}
+	\bigskip
+	\begin{columns}[onlytextwidth,t]
+		\begin{column}{0.47\textwidth}
+			\centering
+			No conditioning\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (c) -- (b);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHRed}{\textbf{path blocked}}
+		\end{column}
+		\begin{column}{0.47\textwidth}
+			\centering
+			Conditioning on $U_2$\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (c) -- (b);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHGreen}{\textbf{path open}}
+		\end{column}
+	\end{columns}
+	\bigskip
+	\begin{center}
+		A collider is blocked if $U_2 \notin S$ and no descendant of $U_2$ is in $S$.\\[3mm]
+		$U_i$ and $U_j$ are \textbf{d-separated} by $S$ if \emph{every} path between them is blocked by $S$.
+	\end{center}
+\end{frame}
+
+\begin{frame}{Markov and faithfulness: the Markov property}
+	The graph tells us which independences hold in the distribution.
+	\begin{center}
+		\begin{tikzpicture}[bx/.style={draw,rounded corners,fill=ETHBlue!10,minimum height=8mm,minimum width=42mm,font=\footnotesize}]
+			\node[bx] (g) {d-separation in the graph};
+			\node[bx,right=32mm of g] (ci) {Conditional independence};
+			\draw[arr,ETHBlue,very thick] ([yshift=1.8mm]g.east) -- node[lbl,above,text=ETHBlue] {\textbf{Markov}} ([yshift=1.8mm]ci.west);
+			\draw[arr,black!25] ([yshift=-1.8mm]ci.west) -- node[lbl,below,text=black!35] {Faithfulness} ([yshift=-1.8mm]g.east);
+		\end{tikzpicture}
+	\end{center}
+	\medskip
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.4\textwidth}
+			\centering
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,right=7mm of a] (b) {$U_2$}; \node[lat,right=7mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
+			\end{tikzpicture}
+		\end{column}
+		\begin{column}{0.56\textwidth}
+			\textbf{Example.} $U_2$ d-separates $U_1$ from $U_3$, so
+			\[
+				U_1 \perp\!\!\!\perp U_3 \mid U_2 .
+			\]
+			Equivalently: \ $p(u) = p_1(u_1)\, p_2(u_2 \mid u_1)\, p_3(u_3 \mid u_2)$.
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{Markov and faithfulness: faithfulness}
+	To read the graph back from the distribution, accidental cancellations must be excluded.
+	\begin{center}
+		\begin{tikzpicture}[bx/.style={draw,rounded corners,fill=ETHBlue!10,minimum height=8mm,minimum width=42mm,font=\footnotesize}]
+			\node[bx] (g) {d-separation in the graph};
+			\node[bx,right=32mm of g] (ci) {Conditional independence};
+			\draw[arr,black!25] ([yshift=1.8mm]g.east) -- node[lbl,above,text=black!35] {Markov} ([yshift=1.8mm]ci.west);
+			\draw[arr,ETHRed,very thick] ([yshift=-1.8mm]ci.west) -- node[lbl,below,text=ETHRed] {\textbf{Markov and faithfulness: faithfulness}} ([yshift=-1.8mm]g.east);
+		\end{tikzpicture}
+	\end{center}
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.62\textwidth}
+			\textbf{Example.} With $U_2 = aU_1 + \varepsilon_2$ and $U_3 = bU_2 + cU_1 + \varepsilon_3$:
+			\[
+				U_3 = (ab + c)\,U_1 + b\,\varepsilon_2 + \varepsilon_3, \qquad \red{c = -ab}.
+			\]
+			The direct and the indirect path cancel: $U_1$ and $U_3$ look independent, although $U_1$ causes $U_3$.
+		\end{column}
+		\begin{column}{0.34\textwidth}
+			\centering
+			\begin{tikzpicture}[node distance=8mm and 8mm]
 				\node[lat] (a) {$U_1$};
 				\node[lat,below right=of a] (b) {$U_2$};
 				\node[lat,above right=of b] (c) {$U_3$};
 				\draw[arr] (a) -- node[lbl,below left=-1mm] {$a$} (b);
 				\draw[arr] (b) -- node[lbl,below right=-1mm] {$b$} (c);
-				\draw[arr,ETHRed] (a) -- node[lbl,above,text=ETHRed] {$c = -ab$} (c);
+				\draw[arr,ETHRed] (a) -- node[lbl,above,text=ETHRed] {$c$} (c);
 			\end{tikzpicture}
 		\end{column}
 	\end{columns}
 	\medskip
-	\begin{block}{Role in the two papers}
-		\begin{itemize}
-			\item von K\"ugelgen et al.: assumed for $\PP_U$; it is what turns ``the latents are recovered'' into ``the graph is recovered''.
-			\item Zhang et al.: the same idea, stated for interventions: an intervention must visibly change what is downstream of its target, even after mixing. Details in the second half.
-		\end{itemize}
+	\begin{block}{In the two papers}
+		Additional paper: standard faithfulness.
+		Main paper: specific conditions against cancellations under interventions and linear mixing. They are not the same assumption.
 	\end{block}
 \end{frame}
 
-\begin{frame}{Why observational data is not enough}
-	\begin{enumerate}
-		\item \textbf{Even if $U$ were observed}, i.i.d.\ data gives the graph only up to Markov equivalence: $U_1 \to U_2$ and $U_1 \leftarrow U_2$ fit equally well.
-		\medskip
-		\item \textbf{With an unknown mixing it gets worse.} Write each latent as a function of independent noise, $U = g(\varepsilon)$. Then
-		\[
-			X = f(U) = (f \circ g)(\varepsilon).
-		\]
-		Independent latents $\varepsilon$ with the \emph{empty} graph and mixing $f \circ g$ explain the data just as well.
-	\end{enumerate}
-	\medskip
-	\begin{block}{Consequence}
-		From observational data alone, any causal DAG can explain the distribution of $X$.
-		The causal variables are singled out by what is special about them: \alert{interventions act on them}.
-	\end{block}
-\end{frame}
-
-\begin{frame}{What is the best we can hope for?}
-	Some ambiguity can never be removed, because the mixing $f$ absorbs it.
+\begin{frame}{Different assumptions, different guarantees}
+	The two papers make different trade-offs.
 	\medskip
 	\begin{center}
-		\begin{tabular}{@{}p{0.3\textwidth}p{0.3\textwidth}p{0.3\textwidth}@{}}
+		\renewcommand{\arraystretch}{1.5}
+		\begin{tabular}{@{}p{0.2\textwidth}>{\raggedright\arraybackslash}p{0.35\textwidth}>{\raggedright\arraybackslash}p{0.35\textwidth}@{}}
 			\toprule
-			& von K\"ugelgen et al. & Zhang et al. \\
+			& \textbf{Additional paper} & \textbf{Main paper} \\
 			\midrule
-			Order of the latents & any relabeling $\pi$ & any relabeling $\pi$ \\[1mm]
-			Scale of each latent & any invertible map $\phi_i(U_i)$ & affine map $\lambda_i U_i + b_i$ \\[1mm]
-			Graph & $\G$ up to relabeling & $\G$ up to relabeling \\
+			Mixing & general, smooth and invertible & polynomial class with rank conditions \\
+			Interventions & perfect & soft allowed \\
+			Number of latents & known & unknown \\
+			What is recovered & separate factors and the graph & graph and targets; residual mixing of the factors is possible \\
 			\bottomrule
 		\end{tabular}
 	\end{center}
 	\medskip
-	\begin{itemize}
-		\item A result of the form ``the model is identified up to these changes'' is the target in both papers.
-		\item The open question is which data and assumptions get us there.
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{Common ground of the two papers}
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\begin{block}{Model}
-				\begin{itemize}
-					\item Latent variables follow a DAG model: $\PP_U$ factorizes according to $\G$.
-					\item Mechanisms are nonparametric.
-					\item The mixing $f$ is deterministic, invertible on its image, and the same in all environments.
-					\item A faithfulness-type assumption links $\G$ and the distributions.
-				\end{itemize}
-			\end{block}
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\begin{block}{Data}
-				\begin{itemize}
-					\item Several environments, unpaired samples.
-					\item Each environment changes \emph{one} mechanism; all others are shared.
-					\item Intervention targets are unknown.
-					\item Every latent is intervened on at least once.
-					\item Results hold for infinite data.
-				\end{itemize}
-			\end{block}
-		\end{column}
-	\end{columns}
-	\bigskip
-	\textbf{Where they differ:} the class of mixing functions, hard versus soft interventions, and whether the number of latents is known.
+	The more general the mixing, the stronger the interventions have to be.
 \end{frame}
 
 %======================================================================
