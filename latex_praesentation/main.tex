@@ -141,6 +141,44 @@
 	\end{itemize}
 \end{frame}
 
+\begin{frame}{From independent components to causal variables}
+	\begin{columns}[onlytextwidth,t]
+		\begin{column}{0.47\textwidth}
+			\centering
+			\textbf{Nonlinear ICA}\\[2mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$S_1$}; \node[lat,right=5mm of a] (b) {$S_2$}; \node[lat,right=5mm of b] (c) {$S_3$};
+				\node[draw,dashed,rounded corners,fit=(a)(c),inner sep=1.5mm] (box) {};
+				\node[trapezium,draw,fill=ETHBlue!15,shape border rotate=270,minimum height=6mm,minimum width=11mm,right=5mm of box] (f) {\scriptsize$f$};
+				\node[draw,fill=ETHGray!15,minimum width=8mm,minimum height=7mm,right=5mm of f,font=\scriptsize] (x) {$X$};
+				\draw[arr] (box) -- (f); \draw[arr] (f) -- (x);
+			\end{tikzpicture}
+			\[
+				X = f(S), \qquad p(s) = \prod_i p(s_i)
+			\]
+			Independent sources: \alert{no edges}.\\
+			Goal: recover the sources.
+		\end{column}
+		\begin{column}{0.47\textwidth}
+			\centering
+			\textbf{Causal representation learning}\\[2mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,right=5mm of a] (b) {$U_2$}; \node[lat,right=5mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
+				\node[draw,dashed,rounded corners,fit=(a)(c),inner sep=1.5mm] (box) {};
+				\node[trapezium,draw,fill=ETHBlue!15,shape border rotate=270,minimum height=6mm,minimum width=11mm,right=5mm of box] (f) {\scriptsize$f$};
+				\node[draw,fill=ETHGray!15,minimum width=8mm,minimum height=7mm,right=5mm of f,font=\scriptsize] (x) {$X$};
+				\draw[arr] (box) -- (f); \draw[arr] (f) -- (x);
+			\end{tikzpicture}
+			\[
+				X = f(U), \qquad p(u) = \prod_i p\big(u_i \mid u_{\pa(i)}\big)
+			\]
+			Dependent latents: a DAG $\G$.\\
+			Goal: recover the latents \emph{and} $\G$.
+		\end{column}
+	\end{columns}
+\end{frame}
+
 \begin{frame}{Observing is not enough}
 	\vspace*{-3mm}
 	\begin{center}
@@ -331,44 +369,6 @@
 \section{Setup shared by both papers \hfill {\normalsize Francesco}}
 %======================================================================
 
-\begin{frame}{From independent components to causal variables}
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\centering
-			\textbf{Nonlinear ICA}\\[2mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$S_1$}; \node[lat,right=5mm of a] (b) {$S_2$}; \node[lat,right=5mm of b] (c) {$S_3$};
-				\node[draw,dashed,rounded corners,fit=(a)(c),inner sep=1.5mm] (box) {};
-				\node[trapezium,draw,fill=ETHBlue!15,shape border rotate=270,minimum height=6mm,minimum width=11mm,right=5mm of box] (f) {\scriptsize$f$};
-				\node[draw,fill=ETHGray!15,minimum width=8mm,minimum height=7mm,right=5mm of f,font=\scriptsize] (x) {$X$};
-				\draw[arr] (box) -- (f); \draw[arr] (f) -- (x);
-			\end{tikzpicture}
-			\[
-				X = f(S), \qquad p(s) = \prod_i p(s_i)
-			\]
-			Independent sources: \alert{no edges}.\\
-			Goal: recover the sources.
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\centering
-			\textbf{Causal representation learning}\\[2mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,right=5mm of a] (b) {$U_2$}; \node[lat,right=5mm of b] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
-				\node[draw,dashed,rounded corners,fit=(a)(c),inner sep=1.5mm] (box) {};
-				\node[trapezium,draw,fill=ETHBlue!15,shape border rotate=270,minimum height=6mm,minimum width=11mm,right=5mm of box] (f) {\scriptsize$f$};
-				\node[draw,fill=ETHGray!15,minimum width=8mm,minimum height=7mm,right=5mm of f,font=\scriptsize] (x) {$X$};
-				\draw[arr] (box) -- (f); \draw[arr] (f) -- (x);
-			\end{tikzpicture}
-			\[
-				X = f(U), \qquad p(u) = \prod_i p\big(u_i \mid u_{\pa(i)}\big)
-			\]
-			Dependent latents: a DAG $\G$.\\
-			Goal: recover the latents \emph{and} $\G$.
-		\end{column}
-	\end{columns}
-\end{frame}
-
 \begin{frame}{Multi-environment data: the environments}
 	\framesubtitle{The same system under several experimental conditions: $X^e = f(U^e),\ e \in \mathcal{E}$}
 	\begin{columns}[onlytextwidth]
@@ -532,7 +532,7 @@
 	\end{center}
 \end{frame}
 
-\begin{frame}{What does identification mean?}
+\begin{frame}{The formal identification question}
 	A candidate $(h, G')$: an encoder $Z = h(X)$ and a graph $G'$ that explain \emph{all} environments and satisfy the assumptions.
 	\begin{center}
 	\begin{tikzpicture}
@@ -564,183 +564,65 @@
 	\end{tikzpicture}
 	\end{center}
 	\begin{center}
-		\textbf{Identified}: once the assumptions are imposed, the two sets coincide. Recovery is up to equivalence.
+		\textbf{Question}: do all such candidates belong to the blue class?
 	\end{center}
-	A result states \textbf{what} is recovered and \textbf{up to which transformations}.
+	Fitting the data is not enough: assumptions must link the distribution to the causal structure.
 \end{frame}
 
-\begin{frame}{Markov and faithfulness: d-separation (1/3)}
-	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{1. Chain}
-	\bigskip
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\centering
-			No conditioning\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHGreen}{\textbf{path open}}
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\centering
-			Conditioning on $U_2$\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHRed}{\textbf{path blocked}}
-		\end{column}
-	\end{columns}
-	\bigskip
-	\begin{center}
-		A chain is blocked if $U_2 \in S$.
-	\end{center}
-\end{frame}
-
-\begin{frame}{Markov and faithfulness: d-separation (2/3)}
-	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{2. Fork}
-	\bigskip
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\centering
-			No conditioning\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (b) -- (a); \draw[arr] (b) -- (c);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHGreen}{\textbf{path open}}
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\centering
-			Conditioning on $U_2$\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (b) -- (a); \draw[arr] (b) -- (c);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHRed}{\textbf{path blocked}}
-		\end{column}
-	\end{columns}
-	\bigskip
-	\begin{center}
-		A fork is blocked if $U_2 \in S$.
-	\end{center}
-\end{frame}
-
-\begin{frame}{Markov and faithfulness: d-separation (3/3)}
-	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{3. Collider}
-	\bigskip
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\centering
-			No conditioning\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (c) -- (b);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHRed}{\textbf{path blocked}}
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\centering
-			Conditioning on $U_2$\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (c) -- (b);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHGreen}{\textbf{path open}}
-		\end{column}
-	\end{columns}
-	\bigskip
-	\begin{center}
-		A collider is blocked if $U_2 \notin S$ and no descendant of $U_2$ is in $S$.\\[3mm]
-		$U_i$ and $U_j$ are \textbf{d-separated} by $S$ if \emph{every} path between them is blocked by $S$.
-	\end{center}
-\end{frame}
-
-\begin{frame}{Markov and faithfulness: the Markov property}
-	The graph tells us which independences hold in the distribution.
-	\begin{center}
-		\begin{tikzpicture}[bx/.style={draw,rounded corners,fill=ETHBlue!10,minimum height=8mm,minimum width=42mm,font=\footnotesize}]
-			\node[bx] (g) {d-separation in the graph};
-			\node[bx,right=32mm of g] (ci) {Conditional independence};
-			\draw[arr,ETHBlue,very thick] ([yshift=1.8mm]g.east) -- node[lbl,above,text=ETHBlue] {\textbf{Markov}} ([yshift=1.8mm]ci.west);
-			\draw[arr,black!25] ([yshift=-1.8mm]ci.west) -- node[lbl,below,text=black!35] {Faithfulness} ([yshift=-1.8mm]g.east);
-		\end{tikzpicture}
-	\end{center}
-	\medskip
+\begin{frame}{Can independence hide causal connections?}
 	\begin{columns}[onlytextwidth]
 		\begin{column}{0.4\textwidth}
 			\centering
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,right=7mm of a] (b) {$U_2$}; \node[lat,right=7mm of b] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
+			\begin{tikzpicture}[node distance=11mm and 11mm]
+				\node[lat,minimum size=9mm,font=\normalsize] (a) {$U_1$};
+				\node[lat,minimum size=9mm,font=\normalsize,below right=of a] (b) {$U_2$};
+				\node[lat,minimum size=9mm,font=\normalsize,above right=of b] (c) {$U_3$};
+				\draw[arr,ETHBlue] (a) -- node[lbl,below left=-1mm,text=ETHBlue] {$2$} (b);
+				\draw[arr,ETHBlue] (b) -- node[lbl,below right=-1mm,text=ETHBlue] {$3$} (c);
+				\draw[arr,ETHRed] (a) -- node[lbl,above,text=ETHRed] {$-6$} (c);
+				\node[lbl,text=ETHRed,above=7mm of $(a)!0.5!(c)$] {Direct contribution: $-6$};
+				\node[lbl,text=ETHBlue,below=3mm of b] {Indirect contribution: $2 \times 3 = +6$};
 			\end{tikzpicture}
 		\end{column}
-		\begin{column}{0.56\textwidth}
-			\textbf{Example.} $U_2$ d-separates $U_1$ from $U_3$, so
+		\begin{column}{0.57\textwidth}
+			\textbf{1. Two causal mechanisms}
 			\[
-				U_1 \perp\!\!\!\perp U_3 \mid U_2 .
+				U_2 = 2U_1 + \varepsilon_2, \qquad U_3 = 3U_2 - 6U_1 + \varepsilon_3 .
 			\]
-			Equivalently: \ $p(u) = p_1(u_1)\, p_2(u_2 \mid u_1)\, p_3(u_3 \mid u_2)$.
-		\end{column}
-	\end{columns}
-\end{frame}
-
-\begin{frame}{Markov and faithfulness: faithfulness}
-	To read the graph back from the distribution, accidental cancellations must be excluded.
-	\begin{center}
-		\begin{tikzpicture}[bx/.style={draw,rounded corners,fill=ETHBlue!10,minimum height=8mm,minimum width=42mm,font=\footnotesize}]
-			\node[bx] (g) {d-separation in the graph};
-			\node[bx,right=32mm of g] (ci) {Conditional independence};
-			\draw[arr,black!25] ([yshift=1.8mm]g.east) -- node[lbl,above,text=black!35] {Markov} ([yshift=1.8mm]ci.west);
-			\draw[arr,ETHRed,very thick] ([yshift=-1.8mm]ci.west) -- node[lbl,below,text=ETHRed] {\textbf{Markov and faithfulness: faithfulness}} ([yshift=-1.8mm]g.east);
-		\end{tikzpicture}
-	\end{center}
-	\begin{columns}[onlytextwidth]
-		\begin{column}{0.62\textwidth}
-			\textbf{Example.} With $U_2 = aU_1 + \varepsilon_2$ and $U_3 = bU_2 + cU_1 + \varepsilon_3$:
+			\uncover<2->{\textbf{2. The contributions cancel}
 			\[
-				U_3 = (ab + c)\,U_1 + b\,\varepsilon_2 + \varepsilon_3, \qquad \red{c = -ab}.
-			\]
-			The direct and the indirect path cancel: $U_1$ and $U_3$ look independent, although $U_1$ causes $U_3$.
-		\end{column}
-		\begin{column}{0.34\textwidth}
-			\centering
-			\begin{tikzpicture}[node distance=8mm and 8mm]
-				\node[lat] (a) {$U_1$};
-				\node[lat,below right=of a] (b) {$U_2$};
-				\node[lat,above right=of b] (c) {$U_3$};
-				\draw[arr] (a) -- node[lbl,below left=-1mm] {$a$} (b);
-				\draw[arr] (b) -- node[lbl,below right=-1mm] {$b$} (c);
-				\draw[arr,ETHRed] (a) -- node[lbl,above,text=ETHRed] {$c$} (c);
-			\end{tikzpicture}
+				U_3 = \underbrace{6U_1 - 6U_1}_{0} + 3\varepsilon_2 + \varepsilon_3 .
+			\]}
+			\uncover<3->{\textbf{3. Independence despite graphical connections}
+			\[
+				U_1 \perp\!\!\!\perp U_3 .
+			\]}
+			{\scriptsize Assume $U_1, \varepsilon_2, \varepsilon_3$ mutually independent.}
 		\end{column}
 	\end{columns}
 	\medskip
-	\begin{block}{In the two papers}
-		Additional paper: standard faithfulness.
-		Main paper: specific conditions against cancellations under interventions and linear mixing. They are not the same assumption.
+	\uncover<3->{
+	\begin{block}{Faithfulness}
+		Faithfulness rules out independences caused by exact cancellation rather than graphical separation.
 	\end{block}
+	{\scriptsize Additional paper: standard faithfulness. \ Main paper: distinct conditions for interventions and linear mixing.}}
 \end{frame}
 
-\begin{frame}{Different assumptions, different guarantees}
-	The two papers make different trade-offs.
-	\medskip
+\begin{frame}{Two routes to identifiability}
 	\begin{center}
-		\renewcommand{\arraystretch}{1.5}
-		\begin{tabular}{@{}p{0.2\textwidth}>{\raggedright\arraybackslash}p{0.35\textwidth}>{\raggedright\arraybackslash}p{0.35\textwidth}@{}}
+		\renewcommand{\arraystretch}{1.2}
+		\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\textwidth}>{\raggedright\arraybackslash}p{0.375\textwidth}>{\raggedright\arraybackslash}p{0.375\textwidth}@{}}
 			\toprule
-			& \textbf{Additional paper} & \textbf{Main paper} \\
+			& \textbf{Additional: von K\"ugelgen et al.} & \textbf{Main: Zhang et al.} \\
 			\midrule
-			Mixing & general, smooth and invertible & polynomial class with rank conditions \\
-			Interventions & perfect & soft allowed \\
-			Number of latents & known & unknown \\
-			What is recovered & separate factors and the graph & graph and targets; residual mixing of the factors is possible \\
+			Mixing & General nonlinear, smooth and invertible & Polynomial mixing with rank conditions \\[1.5mm]
+			Interventions & Perfect: remove parental dependence & Soft allowed: parental dependence may remain \\[1.5mm]
+			Latent dimension & Known & Unknown; identifiable under Assumption 1 \\[1.5mm]
+			Identification conditions & Standard faithfulness + theorem-specific intervention conditions & Conditions excluding cancellations under interventions and linear mixing \\[1.5mm]
+			What is identified? & Individual factors up to invertible reparametrizations, and the graph up to relabeling & Graph and intervention targets up to relabeling; residual mixing of the factors is possible \\
 			\bottomrule
 		\end{tabular}
 	\end{center}
-	\medskip
-	The more general the mixing, the stronger the interventions have to be.
 \end{frame}
 
 %======================================================================
@@ -1290,5 +1172,97 @@
 	J.\ von K\"ugelgen, M.\ Besserve, L.\ Wendong, L.\ Gresele, A.\ Keki\'c, E.\ Bareinboim, D.\ M.\ Blei, B.\ Sch\"olkopf.
 	\emph{Nonparametric Identifiability of Causal Representations from Unknown Interventions.} arXiv:2306.00542, 2023.
 \end{closingframe}
+
+%======================================================================
+% Appendix (backup slides, not in the main path)
+%======================================================================
+
+\begin{frame}[noframenumbering]{Appendix: d-separation (1/3)}
+	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{1. Chain}
+	\bigskip
+	\begin{columns}[onlytextwidth,t]
+		\begin{column}{0.47\textwidth}
+			\centering
+			No conditioning\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHGreen}{\textbf{path open}}
+		\end{column}
+		\begin{column}{0.47\textwidth}
+			\centering
+			Conditioning on $U_2$\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHRed}{\textbf{path blocked}}
+		\end{column}
+	\end{columns}
+	\bigskip
+	\begin{center}
+		A chain is blocked if $U_2 \in S$.
+	\end{center}
+\end{frame}
+
+\begin{frame}[noframenumbering]{Appendix: d-separation (2/3)}
+	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{2. Fork}
+	\bigskip
+	\begin{columns}[onlytextwidth,t]
+		\begin{column}{0.47\textwidth}
+			\centering
+			No conditioning\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (b) -- (a); \draw[arr] (b) -- (c);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHGreen}{\textbf{path open}}
+		\end{column}
+		\begin{column}{0.47\textwidth}
+			\centering
+			Conditioning on $U_2$\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (b) -- (a); \draw[arr] (b) -- (c);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHRed}{\textbf{path blocked}}
+		\end{column}
+	\end{columns}
+	\bigskip
+	\begin{center}
+		A fork is blocked if $U_2 \in S$.
+	\end{center}
+\end{frame}
+
+\begin{frame}[noframenumbering]{Appendix: d-separation (3/3)}
+	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{3. Collider}
+	\bigskip
+	\begin{columns}[onlytextwidth,t]
+		\begin{column}{0.47\textwidth}
+			\centering
+			No conditioning\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (c) -- (b);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHRed}{\textbf{path blocked}}
+		\end{column}
+		\begin{column}{0.47\textwidth}
+			\centering
+			Conditioning on $U_2$\\[3mm]
+			\begin{tikzpicture}
+				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
+				\draw[arr] (a) -- (b); \draw[arr] (c) -- (b);
+			\end{tikzpicture}\\[3mm]
+			\textcolor{ETHGreen}{\textbf{path open}}
+		\end{column}
+	\end{columns}
+	\bigskip
+	\begin{center}
+		A collider is blocked if $U_2 \notin S$ and no descendant of $U_2$ is in $S$.\\[3mm]
+		$U_i$ and $U_j$ are \textbf{d-separated} by $S$ if \emph{every} path between them is blocked by $S$.
+	\end{center}
+\end{frame}
 
 \end{document}
