@@ -1062,92 +1062,101 @@
 %======================================================================
 
 % TODO (Joan): adapt this slide to the main-paper section
-\begin{frame}{Why interventions: single-cell perturbation screens}
+\begin{frame}{Why soft interventions?}
 	\begin{itemize}
-		\item CRISPR screens (Perturb-seq) perturb one or several genes and read out the expression of every cell.
-		\item This gives one dataset per perturbation, next to the unperturbed cells.
-		\item Sequencing destroys the cell, so each cell is seen under \emph{one} condition only: the data are \alert{unpaired}.
-		\item A CRISPR activation does not fix a gene to a value. It changes how the gene responds to its regulators: a \alert{soft} intervention.
+		\item They use the \textbf{Perturb-seq} study of Norman et al.\ (2019): in each cell, CRISPR activates one or two chosen genes, then single-cell sequencing measures the expression of all its genes.
+		\item Sequencing destroys the cell, so the data are \textbf{unpaired}.
+		\item In gene-expression applications, it is not realistic to assume we can perform \emph{hard} interventions.
+		\item A CRISPR activation does not fix a gene to a value. It changes how the gene responds to its regulators, but cannot break its dependence on them: a \textbf{soft} intervention.
 	\end{itemize}
 	\bigskip
-	\begin{block}{What we want in the end}
-		Find the gene programs and how they regulate each other, and predict the effect of perturbation \emph{combinations} that were never measured.
+	\begin{block}{Objective}
+		Understand the causal relations between genes, through the gene programs that regulate them, and predict the effect of perturbation \emph{combinations} that were never measured.
 	\end{block}
 \end{frame}
 
-\begin{frame}{The model: polynomial mixing, soft interventions}
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\begin{block}{Model}
-				\begin{itemize}
-					\item Latent DAG model with nonparametric mechanisms.
-					\item Mixing $f$: a polynomial of $U$. Linear mixing is a special case.
-					\item The number of latents $p$ is \alert{unknown}.
-				\end{itemize}
-			\end{block}
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\begin{block}{Data}
-				\begin{itemize}
-					\item Observational data plus at least one intervention per latent.
-					\item Interventions are \alert{soft}.
-					\item Unpaired samples, unknown targets.
-				\end{itemize}
-			\end{block}
-		\end{column}
-	\end{columns}
-	\bigskip
-	\textbf{First idea: observational data already does part of the job.}
-	\begin{itemize}
-		\item The number of latents is the smallest dimension that can generate the data.
-		\item The latents are recovered up to an unknown linear map, and no further.
-		\item What remains is a linear unmixing problem, $X = U\Lambda + b$. Interventions have to solve it.
-	\end{itemize}
-\end{frame}
-
-\begin{frame}{What can be recovered from soft interventions}
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
+\begin{frame}{What can we recover from soft interventions?}
+	\begin{columns}
+		\begin{column}{0.85\textwidth}
 			\begin{block}{Recovered}
 				\begin{itemize}
-					\item Which interventions act on the same latent.
-					\item The causal graph between the latents, up to their names.
+					\item The causal graph between the latents.
+					\item Which latent each intervention targets.
 					\item The effect of unseen \emph{combinations} of interventions.
 				\end{itemize}
 			\end{block}
-		\end{column}
-		\begin{column}{0.47\textwidth}
+			\onslide<2->
 			\begin{block}{Not recovered}
-				\begin{itemize}
-					\item Each latent on its own.
-					\item For $U_1 \to U_2$, replacing $U_2$ by $U_2 + U_1$ gives another valid model: a soft intervention never separates a variable from its parents.
-				\end{itemize}
+				\vspace{-0.4mm}
+				\begin{columns}[onlytextwidth,c]
+					\begin{column}{0.48\textwidth}
+						\begin{itemize}
+							\item The latents themselves.
+							\item Same graph, same data: a soft intervention never separates $U_2$ from its parent $U_1$.
+						\end{itemize}
+					\end{column}
+					\begin{column}{0.46\textwidth}
+						\centering
+						\begin{tikzpicture}[ex/.style={draw,rounded corners=2mm,minimum height=6.5mm,minimum width=8mm,inner sep=2pt,font=\scriptsize}]
+							\node[ex] (a1) at (0,0) {$U_1$};
+							\node[ex] (a2) at (12mm,0) {$U_2$};
+							\draw[arr] (a1) -- (a2);
+							\node[lbl] at ($(a1)!0.5!(a2)+(0,6mm)$) {truth};
+							\node[ex] (b1) at (27mm,0) {$U_1$};
+							\node[ex] (b2) at (41.5mm,0) {$U_2{+}U_1$};
+							\draw[arr] (b1) -- (b2);
+							\node[lbl] at ($(b1)!0.5!(b2)+(0,6mm)$) {also valid};
+						\end{tikzpicture}
+					\end{column}
+				\end{columns}
+				\vspace{1.4mm}
 			\end{block}
 		\end{column}
 	\end{columns}
-	\bigskip
-	This is exactly the step that needed hard interventions in the first paper.\\[1mm]
-	The causal structure and the predictions survive, and these are what the application needs.
 \end{frame}
 
-\begin{frame}{Linear mixing can hide a causal effect}
-	\begin{columns}[onlytextwidth]
-		\begin{column}{0.6\textwidth}
-			With observed variables, an intervention on $U_i$ changes the marginals of its descendants. That reveals who is downstream of whom.\\[2mm]
-			With mixing this is not enough (Example 1):
+\begin{frame}{Consequence for identifiability}
+	\begin{columns}
+		\begin{column}{0.85\textwidth}
+			\begin{block}{Consequence for identifiability}
+				Compared to the first paper, soft interventions need \textbf{additional assumptions} for the model to be identifiable (next slides).
+			\end{block}
+		\end{column}
+	\end{columns}
+\end{frame}
+
+\begin{frame}{First Assumption}
+	\begin{block}{Assumption 1: polynomial mixing}
+		The mixing $f$ is a full-rank \textbf{polynomial} of the latents (linear mixing is a special case), and the latents can vary freely in all directions.
+	\end{block}
+	\bigskip
+	\onslide<2->
+	\textbf{Why do we need it?}
+	\begin{itemize}
+		\item It allows to learn the number of latents $p$\textsuperscript{*} and the latents up to an affine map, $\hat U = U\Lambda + b$, from observational data alone.
+		\item Any affine map can be absorbed by $f$.
+		\item All later steps in the proof work with linear combinations of the latents: the problem becomes a \textbf{linear} unmixing, and interventions have to find $\Lambda$.
+	\end{itemize}
+	\par\vfill
+	{\footnotesize \textsuperscript{*}$p$ is the smallest number of latents that can generate the data.}
+\end{frame}
+
+\begin{frame}{Second Assumption}
+	\textbf{Why do we need it?}
+	\begin{columns}[onlytextwidth,c]
+		\begin{column}{0.64\textwidth}
 			\begin{itemize}
-				\item Truth: $U_1 \to U_2$, with $I_1$ and $I_2$ shifting $U_1$ and $U_2$.
-				\item Take $\hat U = (U_2,\ U_2 - U_1)$. It generates the same $X$.
-				\item In $\hat U$ the graph is \emph{reversed}: the effect of $I_1$ on $U_2$ is cancelled in $U_2 - U_1$.
+				\item Mixing can hide a causal effect. Truth: $U_1 \to U_2$, with $I_1$ and $I_2$ shifting $U_1$ and $U_2$.
+				\item $\hat U = (U_2,\ U_2 - U_1)$ generates the same $X$, but the shift of $U_1$ cancels in $U_2 - U_1$: the graph is \textbf{reversed}.
 			\end{itemize}
 		\end{column}
-		\begin{column}{0.36\textwidth}
+		\begin{column}{0.32\textwidth}
 			\centering
 			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,below=9mm of a] (b) {$U_2$};
+				\node[lat] (a) {$U_1$}; \node[lat,below=5mm of a] (b) {$U_2$};
 				\draw[arr] (a) -- (b);
 				\node[lbl,left=1mm of a,text=ETHRed] {$I_1$}; \node[lbl,left=1mm of b,text=ETHRed] {$I_2$};
-				\node[lat,right=16mm of a] (c) {$\hat U_1$}; \node[lat,below=9mm of c] (d) {$\hat U_2$};
+				\node[lat,right=16mm of a] (c) {$\hat U_1$}; \node[lat,below=5mm of c] (d) {$\hat U_2$};
 				\draw[arr,ETHRed] (d) -- (c);
 				\node[lbl,right=1mm of c,text=ETHRed] {$I_1$}; \node[lbl,right=1mm of d,text=ETHRed] {$I_2$};
 				\node[lbl,below=1mm of b] {truth}; \node[lbl,below=1mm of d] {same data};
@@ -1155,91 +1164,94 @@
 		\end{column}
 	\end{columns}
 	\medskip
-	\begin{block}{What is needed}
-		The effect of an intervention must stay visible after mixing: it cannot be cancelled by linear combinations. This is faithfulness, adapted to interventions and mixing, and it holds generically.
+	\onslide<2->
+	\begin{block}{Assumption 2: linear interventional faithfulness}
+		An intervention on $U_i$ changes the distribution of $U_i$ and of its most upstream children, and this change \textbf{cannot be cancelled} by adding a linear combination of latents that are not downstream of $U_i$.
 	\end{block}
+	\medskip
+	\onslide<3->
+	\textbf{What it gives us}
+	\begin{itemize}
+		\item We can tell which latent each intervention hits, and who is upstream of whom (e.g.\ a latent that only one intervention changes must be a source).
+	\end{itemize}
 \end{frame}
 
-\begin{frame}{Idea 1: interventions reveal who is upstream}
-	\begin{columns}[onlytextwidth]
-		\begin{column}{0.6\textwidth}
+\begin{frame}{Third Assumption}
+	\textbf{Why do we need it?}
+	\begin{columns}[onlytextwidth,c]
+		\begin{column}{0.64\textwidth}
 			\begin{itemize}
-				\item An intervention changes the distribution of its target and of everything downstream, and of nothing else.
-				\item A \textbf{source} node is special: its distribution changes under exactly one intervention, its own.
-				\item So: search for a linear combination of $X$ whose distribution changes under one intervention only. It must be a source, and that intervention targets it.
-				\item Remove the sources and repeat on the rest.
+				\item Assumption 2 only gives who is upstream of whom. Many graphs share that, from a chain to a complete graph.
+				\item Example: truth $U_1 \to U_2 \to U_3$ and $U_1 \to U_3$, where $U_3$ depends on $U_1 + U_2$.
 			\end{itemize}
 		\end{column}
-		\begin{column}{0.36\textwidth}
+		\begin{column}{0.32\textwidth}
 			\centering
-			\begin{tikzpicture}[node distance=8mm and 8mm]
-				\node[intv] (a) {$U_1$};
-				\node[lat,below left=of a] (b) {$U_2$};
-				\node[lat,below right=of a] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (a) -- (c); \draw[arr] (b) -- (c);
-				\node[lbl,above=1mm of a,text=ETHRed] {source};
+			\begin{tikzpicture}[lat/.append style={minimum size=6mm}]
+				\node[lat] (a1) at (6mm,9mm) {$U_1$};
+				\node[lat] (a2) at (0,0) {$U_2$};
+				\node[lat] (a3) at (12mm,0) {$U_3$};
+				\draw[arr] (a1) -- (a2); \draw[arr] (a2) -- (a3); \draw[arr] (a1) -- (a3);
+				\node[lat] (b1) at (32mm,9mm) {$\hat U_1$};
+				\node[lat] (b2) at (26mm,0) {$\hat U_2$};
+				\node[lat] (b3) at (38mm,0) {$\hat U_3$};
+				\draw[arr] (b1) -- (b2); \draw[arr] (b2) -- (b3);
+				\node[lbl] at ($(a2)!0.5!(a3)+(0,-6mm)$) {truth}; \node[lbl] at ($(b2)!0.5!(b3)+(0,-6mm)$) {same data};
 			\end{tikzpicture}
 		\end{column}
 	\end{columns}
 	\medskip
-	\begin{block}{What this gives}
-		The targets of all interventions and all \emph{ancestral} relations: who is upstream of whom. Not yet which edges are direct.
+	\onslide<2->
+	\begin{block}{Assumption 3: every edge leaves a trace}
+		For every true edge $U_i \to U_j$, $U_j$ stays \textbf{dependent} on $U_i$ given the other parents of $U_j$, even after mixing $U_i$ linearly into them.
 	\end{block}
-\end{frame}
-
-\begin{frame}{Ideas 2 and 3: the sparsest graph, and recombining mechanisms}
-	\textbf{Idea 2: direct edges.}
-	\begin{itemize}
-		\item Many graphs share the same ancestral relations, from a chain to a complete graph.
-		\item Among those compatible with the data, the true graph is the \alert{sparsest}.
-	\end{itemize}
 	\medskip
-	\textbf{Idea 3: predicting unseen combinations.}
+	\onslide<3->
+	\textbf{What it gives us}
 	\begin{itemize}
-		\item Each single intervention teaches the model one changed mechanism.
-		\item A combination of interventions with different targets is obtained by plugging in several changed mechanisms at once:
+		\item Mixing can never drop a true edge, so the sparsest graph that explains the data must be the true one (up to relabeling).
 	\end{itemize}
-	\[
-		\hat U \sim \prod_{\text{not targeted}} \PP\big(\hat U_i \mid \hat U_{\pa(i)}\big) \cdot \prod_{\text{targeted}} \red{\PP^{I}\big(\hat U_i \mid \hat U_{\pa(i)}\big)}, \qquad X = \hat f(\hat U)
-	\]
-	The model can generate data for a double perturbation it has never seen.
 \end{frame}
 
 %======================================================================
 \section{Main paper: the discrepancy-based VAE \hfill {\normalsize Joan}}
 %======================================================================
 
-\begin{frame}{From the theory to an algorithm}
-	\begin{itemize}
-		\item From the theory: the true graph is the sparsest model that fits all datasets.
-		\item This suggests a penalized likelihood. Searching over DAGs is combinatorial, so the search is relaxed and done by gradient descent.
-		\item The likelihood is replaced by a variational lower bound, as in a VAE.
-	\end{itemize}
-	\medskip
-	\begin{block}{Re-parameterization}
-		Each mechanism is written with its own independent noise: $U_i = s_i(U_{\pa(i)}, Z_i)$. With a prior $p(Z)$ and an encoder $q_\phi(Z \mid X)$,
-		\[
-			\log p_{\theta,\varnothing}(x) \ \geq\ \underbrace{\mathbb{E}_{q_\phi(Z \mid x)} \log p_{\theta,\varnothing}(x \mid Z)}_{\text{reconstruction}} \ \underbrace{-\, D_{\mathrm{KL}}\big(q_\phi(Z \mid x)\,\|\,p(Z)\big)}_{\text{regularization}} .
-		\]
-	\end{block}
-	The decoder has two parts: a deep SCM from $Z$ to $U$, then the mixing $f_\theta$ from $U$ to $X$.
+\begin{frame}{How do we learn the model in practice?}
+	The theory tells us what the right model looks like. We turn each requirement into a training objective.
+	\bigskip
+	\begin{center}
+	\begin{tikzpicture}[x=1mm,y=1mm,
+			req/.style={draw=ETHBlue,fill=ETHBlue!12,rounded corners=2mm,minimum height=9mm,text width=70mm,align=center,font=\small,execute at begin node={\hyphenpenalty=10000}},
+			obj/.style={draw=ETHRed,fill=ETHRed!8,rounded corners=2mm,minimum height=9mm,text width=46mm,align=center,font=\small,execute at begin node={\hyphenpenalty=10000}}]
+		\node[font=\small\bfseries] at (0,9) {The right model\ldots};
+		\node[font=\small\bfseries] at (72,9) {Training objective};
+		\foreach \r/\req/\obj in {1/{reproduces the observational data}/{\textbf{reconstruction} (VAE)},
+		                         2/{reproduces each interventional dataset by changing \textbf{one} mechanism}/{\textbf{discrepancy} between virtual and real data},
+		                         3/{uses the \textbf{sparsest} graph that does so}/{\textbf{sparsity} penalty on the graph}}{
+			\pgfmathsetmacro{\yy}{-(\r-1)*14}
+			\begin{scope}[visible on=<\r->]
+				\node[req] (q\r) at (0,\yy) {\req};
+				\node[obj] (o\r) at (72,\yy) {\obj};
+				\draw[arr] (q\r) -- (o\r);
+			\end{scope}
+		}
+	\end{tikzpicture}
+	\end{center}
+	\bigskip
+	\onslide<4->{Searching over all DAGs is combinatorial, so everything is \textbf{relaxed} and trained by gradient descent.}
 \end{frame}
 
-\begin{frame}{Architecture}
-	\framesubtitle{Figure: Zhang et al., 2023, Fig.\ 4}
-	\begin{columns}[onlytextwidth]
-		\begin{column}{0.64\textwidth}
-			\includegraphics[width=\textwidth]{figures/zh_fig4}
-		\end{column}
-		\begin{column}{0.33\textwidth}
-			\begin{itemize}
-				\item \textbf{Top row}: a VAE on observational samples. Decoder: deep SCM with graph $A_\theta$, then mixing $f_\theta$.
-				\item \textbf{Intervention encoder}: label $I$ $\mapsto$ target $i$ and shift $a_i$.
-				\item \textbf{Middle row}: the same noise $\hat Z$ through the intervened SCM gives a \alert{virtual counterfactual}.
-				\item \textbf{Bottom}: compare these, in distribution, with real interventional samples.
-			\end{itemize}
-		\end{column}
-	\end{columns}
+\begin{frame}{The model: a VAE with a causal decoder}
+	\begin{center}
+		\includegraphics[width=0.72\textwidth]{figures/zh_fig4}
+	\end{center}
+	\vspace{-2mm}
+	\begin{itemize}
+		\item<1-> \textbf{Observational path}: a VAE whose decoder is a causal model followed by the mixing.
+		\item<2-> \textbf{Intervention path}: same noise $Z$, one mechanism shifted, same mixing.
+	\end{itemize}
+	\src{Figure: Zhang et al., 2023, Fig.\ 4.}
 \end{frame}
 
 \begin{frame}{The loss}
@@ -1247,15 +1259,50 @@
 		\mathcal{L} = \mathbb{E}_{X^\varnothing}\Big[\mathcal{L}^{\mathrm{reg}}(X) + \beta\, \mathcal{L}^{\mathrm{recon}}(X)\Big] + \alpha\, \mathcal{L}^{\mathrm{discrep}} + \lambda\, \mathcal{L}^{\mathrm{sparse}}
 	\]
 	\begin{itemize}
-		\item $\mathcal{L}^{\mathrm{discrep}} = -\sum_{k} \mathrm{MMD}\big(\text{virtual counterfactuals of } I_k,\ \D^{I_k}\big)$: the model must reproduce each interventional distribution. No pairing is needed, only a distance between two samples.
-		\item $\mathcal{L}^{\mathrm{sparse}} = -\lVert A_\theta \rVert_1$: prefer the sparsest graph, as the theory asks.
-		\item $A_\theta$ is upper triangular. This costs nothing, since the order of the latents is arbitrary.
-		\item MMD is used instead of an adversarial distance to avoid saddle-point optimization.
+		\item<1-> $\mathcal{L}^{\mathrm{reg}} + \beta\,\mathcal{L}^{\mathrm{recon}}$: the usual VAE bound. Reproduce the \textbf{observational} data.
+		\item<2-> $\mathcal{L}^{\mathrm{discrep}} = -\sum_k \mathrm{MMD}\big(\tilde X^{I_k}, \D^{I_k}\big)$: reproduce every \textbf{interventional} dataset. No pairs needed.
+		\item<3-> $\mathcal{L}^{\mathrm{sparse}} = -\lVert A_\theta \rVert_1$: prefer the \textbf{sparsest} graph.
 	\end{itemize}
 	\medskip
+	\onslide<4->
 	\begin{block}{Guarantees}
-		The loss lower-bounds the log-likelihood one would optimize with true counterfactual pairs, and the procedure is consistent: with infinite data it recovers the generative process, under suitable conditions.
+		The loss lower-bounds the likelihood one would get with true counterfactual pairs, and with infinite data it recovers the generative process.
 	\end{block}
+\end{frame}
+
+\begin{frame}{Predicting unseen combinations}
+	\begin{center}
+	\begin{tikzpicture}[node distance=5mm and 4mm,lat/.append style={minimum size=6mm}]
+		% learned from I_A
+		\begin{scope}
+			\node[lat] (a1) at (0,0) {$U_1$}; \node[lat] (a2) at (12mm,0) {$U_2$}; \node[lat] (a3) at (24mm,0) {$U_3$};
+			\draw[arr] (a1) -- (a2); \draw[arr] (a2) -- (a3);
+			\node[intv] at (a1) {$U_1$};
+			\node[lbl,above=2mm of a2] {\textbf{learned from} $I_A$};
+		\end{scope}
+		\begin{scope}[yshift=-14mm]
+			\node[lat] (b1) at (0,0) {$U_1$}; \node[lat] (b2) at (12mm,0) {$U_2$}; \node[lat] (b3) at (24mm,0) {$U_3$};
+			\draw[arr] (b1) -- (b2); \draw[arr] (b2) -- (b3);
+			\node[intv] at (b3) {$U_3$};
+			\node[lbl,below=2mm of b2] {\textbf{learned from} $I_B$};
+		\end{scope}
+		\begin{scope}[xshift=62mm,yshift=-7mm,visible on=<2->]
+			\node[lat] (c1) at (0,0) {$U_1$}; \node[lat] (c2) at (12mm,0) {$U_2$}; \node[lat] (c3) at (24mm,0) {$U_3$};
+			\draw[arr] (c1) -- (c2); \draw[arr] (c2) -- (c3);
+			\node[intv] at (c1) {$U_1$}; \node[intv] at (c3) {$U_3$};
+			\node[lbl,above=2mm of c2] {\textbf{combined} $I_A + I_B$};
+			\node[draw,fill=ETHGray!15,font=\footnotesize] (cx) at (12mm,-12mm) {$X = \hat f(\hat U)$};
+			\draw[arr] ($(c2)+(0,-4mm)$) -- (cx);
+			\node[lbl,right=1mm of cx,text=ETHRed] {never measured};
+		\end{scope}
+		\draw[arr,visible on=<2->,ETHGray,line width=1pt] (30mm,-7mm) -- (56mm,-7mm);
+	\end{tikzpicture}
+	\end{center}
+	\begin{itemize}
+		\item<1-> Each single intervention teaches the model \textbf{one} changed mechanism.
+		\item<2-> Plug several changed mechanisms in at once, and decode: data for a combination never seen.
+		\item<3-> This is what the experiments test, on double-gene perturbations.
+	\end{itemize}
 \end{frame}
 
 %======================================================================
