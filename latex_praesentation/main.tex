@@ -45,6 +45,71 @@
 \end{tikzpicture}}
 
 \newcommand{\atag}[1]{\text{\textcolor{ETHBlue}{\scriptsize\bfseries #1}}}
+% Small legend in the top-right corner recalling the general setting (used on the additional-paper slides)
+\newcommand{\setupkey}{%
+	\begin{tikzpicture}[remember picture,overlay]
+		\node[anchor=north east,inner sep=0pt,xshift=-9.5mm,yshift=-3.5mm] at (current page.north east) {%
+			\scriptsize\renewcommand{\arraystretch}{0.95}%
+			\begin{tabular}{@{}!{\color{black!30}\vrule width 0.6pt}@{\hspace{1.5mm}}c@{\hspace{1.5mm}}l@{}}
+				\textcolor{ETHGray}{$U$} & \textcolor{ETHGray}{latent causal variables} \\
+				$X$ & observed data \\
+				\textcolor{ETHBlue}{$Z$} & \textcolor{ETHBlue}{learned representation}
+			\end{tabular}};
+	\end{tikzpicture}\par\vspace*{-\baselineskip}\vspace*{-\parskip}%
+}
+
+% ---- Candidate models of the experiment (colours of Fig. 3 in von Kuegelgen et al.) ----
+\definecolor{vkblue}{RGB}{100,149,237}\definecolor{vkorange}{RGB}{240,160,50}\definecolor{vkred}{RGB}{220,60,70}\definecolor{vkpurple}{RGB}{150,80,150}
+\colorlet{candcol}{vkblue}
+\tikzset{
+  zc/.style={lat,minimum size=7.5mm,font=\footnotesize,fill=white},
+  zt/.style={zc,draw=ETHRed,very thick,text=ETHRed},
+  mz/.style={circle,draw,fill=white,minimum size=2.6mm,inner sep=0pt},
+  mt/.style={mz,draw=ETHRed,line width=0.9pt,fill=ETHRed!25},
+}
+% small scatter-plot icon for a dataset, centred at the origin of the current scope
+\newcommand{\dataicon}{%
+	\draw[black!55,fill=black!4] (-7mm,-5mm) rectangle (7mm,5mm);
+	\fill[black!55] (0.21mm,1.88mm) circle (0.4mm); \fill[black!55] (-2.05mm,1.49mm) circle (0.4mm); \fill[black!55] (-0.57mm,-0.39mm) circle (0.4mm); \fill[black!55] (4.18mm,0.24mm) circle (0.4mm); \fill[black!55] (-0.09mm,1.09mm) circle (0.4mm); \fill[black!55] (2.48mm,-0.05mm) circle (0.4mm); \fill[black!55] (1.29mm,-1.46mm) circle (0.4mm); \fill[black!55] (-0.81mm,-0.66mm) circle (0.4mm); \fill[black!55] (-2.93mm,-2.26mm) circle (0.4mm); \fill[black!55] (-3.58mm,-0.36mm) circle (0.4mm); \fill[black!55] (-0.38mm,-0.48mm) circle (0.4mm); \fill[black!55] (0.15mm,-2.00mm) circle (0.4mm); \fill[black!55] (-0.17mm,0.36mm) circle (0.4mm); \fill[black!55] (1.65mm,-1.27mm) circle (0.4mm); \fill[black!55] (-0.88mm,-3.02mm) circle (0.4mm); \fill[black!55] (-1.11mm,-3.30mm) circle (0.4mm);}
+% one environment row of a candidate slide: #1 y-shift, #2 environment index, #3 edge Z1->Z2 (0/1), #4 target (0 none, 1, 2)
+\newcommand{\candrow}[4]{%
+	\begin{scope}[yshift=#1]
+		\dataicon
+		\node[font=\footnotesize,anchor=east] at (-9mm,1.6mm) {$\mathcal{D}^{e_#2}$};
+		\node[font=\scriptsize,anchor=east,text=black!60] at (-8.5mm,-2.4mm) {$(X_1, X_2)$};
+		\draw[arr] (8.5mm,0) -- (31mm,0);
+		\draw[arr] (55mm,0) -- (74mm,0);
+		\node[draw=candcol,line width=1.1pt,rounded corners=2pt,fill=candcol!8,minimum width=40mm,minimum height=13mm] at (95mm,0) {};
+		\ifnum#4=1 \node[zt] (z1) at (86mm,0) {$Z_1$}; \else \node[zc] (z1) at (86mm,0) {$Z_1$}; \fi
+		\ifnum#4=2 \node[zt] (z2) at (104mm,0) {$Z_2$}; \else \node[zc] (z2) at (104mm,0) {$Z_2$}; \fi
+		\ifnum#3=1 \draw[arr] (z1) -- (z2); \fi
+	\end{scope}}
+% full candidate picture: #1 index k, #2 colour, then (edge,target) for e0 is (#3,0), e1 is (#4,#5), e2 is (#6,#7)
+\newcommand{\candpicture}[7]{%
+	\colorlet{candcol}{#2}%
+	\begin{tikzpicture}
+		\node[draw=candcol,line width=1.1pt,fill=candcol!18,rounded corners=2pt,minimum width=22mm,minimum height=45mm,align=center] at (43mm,-16mm) {{\scriptsize\bfseries Shared}\\{\scriptsize\bfseries Normalizing Flow}\\[2mm]{\LARGE$h_{#1}$}\\[2mm]{\scriptsize invertible}\\{\scriptsize neural network}};
+		\node[font=\scriptsize,text=candcol!75!black] at (43mm,10.5mm) {learned};
+		\node[font=\scriptsize,text=black!65,align=center] at (95mm,12mm) {graph and targets fixed\\\textcolor{candcol!75!black}{mechanisms learned}};
+		\node[font=\footnotesize] at (43mm,-43mm) {$Z = h_{#1}(X), \quad X = h_{#1}^{-1}(Z)$};
+		\candrow{0mm}{0}{#3}{0}
+		\candrow{-16mm}{1}{#4}{#5}
+		\candrow{-32mm}{2}{#6}{#7}
+		\node[zt,minimum size=4mm] (leg) at (84mm,-43mm) {};
+		\node[font=\scriptsize,anchor=west] at (87mm,-43mm) {intervention target};
+	\end{tikzpicture}}
+% miniature of a candidate (three environments side by side): #1 x, #2 y, #3 colour, e0 edge #4, e1 (#5,#6), e2 (#7,#8)
+\newcommand{\candmini}[8]{%
+	\begin{scope}[shift={(#1,#2)}]
+		\node[draw=#3,line width=1pt,rounded corners=1.5pt,fill=#3!10,minimum width=31mm,minimum height=7mm] at (0,0) {};
+		\draw[#3!60] (-5.1mm,-2.4mm) -- (-5.1mm,2.4mm); \draw[#3!60] (5.1mm,-2.4mm) -- (5.1mm,2.4mm);
+		\foreach \xx/\edge/\tgt in {-10.2mm/#4/0, 0mm/#5/#6, 10.2mm/#7/#8}{
+			\ifnum\tgt=1 \node[mt] (m1) at (\xx-2.2mm,0) {}; \else \node[mz] (m1) at (\xx-2.2mm,0) {}; \fi
+			\ifnum\tgt=2 \node[mt] (m2) at (\xx+2.2mm,0) {}; \else \node[mz] (m2) at (\xx+2.2mm,0) {}; \fi
+			\ifnum\edge=1 \draw[-{Stealth[length=1.1mm]},semithick] (m1) -- (m2); \fi
+		}
+	\end{scope}}
+
 \newcommand{\PP}{\mathbb{P}}
 \newcommand{\pa}{\mathrm{pa}}
 \newcommand{\G}{\mathcal{G}}
@@ -365,7 +430,7 @@
 	\begin{columns}[onlytextwidth,t]
 		\begin{column}{0.47\textwidth}
 			\onslide<2->
-			\textbf{Additional paper}\\
+			\textbf{Nonparametric Causal Identifiability}\\
 			von K\"ugelgen et al., \emph{Nonparametric Identifiability of Causal Representations from Unknown Interventions}, 2023
 			\begin{itemize}
 				\item No assumption on the mixing function.
@@ -374,7 +439,7 @@
 		\end{column}
 		\begin{column}{0.47\textwidth}
 			\onslide<3->
-			\textbf{Main paper}\\
+			\textbf{Causal Disentanglement from Soft Interventions}\\
 			Zhang et al., \emph{Identifiability Guarantees for Causal Disentanglement from Soft Interventions}, 2023
 			\begin{itemize}
 				\item Polynomial mixing function.
@@ -624,7 +689,7 @@
 	\begin{block}{Faithfulness}
 		Faithfulness rules out independences caused by exact cancellation rather than graphical separation.
 	\end{block}
-	{\scriptsize Additional paper: standard faithfulness. \ Main paper: distinct conditions for interventions and linear mixing.}}
+	{\scriptsize Nonparametric Identifiability: standard faithfulness. \ Causal Disentanglement: distinct conditions for interventions and linear mixing.}}
 \end{frame}
 
 \begin{frame}{Two routes to identifiability}
@@ -632,7 +697,7 @@
 		\renewcommand{\arraystretch}{1.2}
 		\begin{tabular}{@{}>{\raggedright\arraybackslash}p{0.18\textwidth}>{\raggedright\arraybackslash}p{0.375\textwidth}>{\raggedright\arraybackslash}p{0.375\textwidth}@{}}
 			\toprule
-			& \textbf{Additional: von K\"ugelgen et al.} & \textbf{Main: Zhang et al.} \\
+			& \textbf{Nonparametric Identifiability} & \textbf{Causal Disentanglement} \\
 			\midrule
 			Mixing & General nonlinear, smooth and invertible & Polynomial mixing with rank conditions \\[1.5mm]
 			Interventions & Perfect: remove parental dependence & Soft allowed: parental dependence may remain \\[1.5mm]
@@ -645,7 +710,7 @@
 \end{frame}
 
 %======================================================================
-\section{Setup of the additional paper \hfill {\normalsize Francesco}}
+\section{Nonparametric Causal Identifiability: setup \hfill {\normalsize Francesco}}
 %======================================================================
 
 \begin{frame}{Setup: from hidden variables to a learned representation}
@@ -676,40 +741,46 @@
 \end{frame}
 
 \begin{frame}{General assumptions: recall from the common setup}
-	\framesubtitle{Under which assumptions do we study the problem?}
-	\textbf{Latent SCM}: arbitrary causal mechanisms with independent noise.
-	\[
-		U_i := f_i\big(U_{\pa(i)}, \varepsilon_i\big)
-	\]
-
-	\medskip
-	\textbf{Multi-environment data}: unpaired samples, known environment labels and unknown intervention targets.
-
-	\bigskip
-	\textbf{Shared mechanisms}: same mixing function and unchanged non-intervened mechanisms.
-
-	\bigskip
-	\textbf{Atomic interventions}: one target per interventional environment.
+	\setupkey
+	\begin{itemize}
+		\setlength{\itemsep}{3.5mm}
+		\item \textbf{Latent causal structure:} the latent variables follow a DAG $G$, with the factorization
+		\[
+			p(u) = \prod_{i=1}^{n} p_i\big(u_i \mid u_{\pa(i)}\big).
+		\]
+		\item \textbf{Multi-environment data:} unpaired observations, known environment labels and unknown intervention targets.
+		\item \textbf{Mechanism invariance:} the mixing function and all non-intervened causal mechanisms are shared across environments.
+		\item \textbf{Atomic interventions:} exactly one latent variable is targeted per intervention.
+	\end{itemize}
 \end{frame}
 
-\begin{frame}{General assumptions: additional paper}
-	\framesubtitle{Under which assumptions do we study the problem?}
-	\textbf{Unrestricted mechanisms}: the $f_i$ can be any causal mechanism, with no parametric form.
-
-	\bigskip
-	\textbf{General mixing}: $f$ is a diffeomorphism onto its image, i.e.\ smooth and invertible with a smooth inverse.
-	\[
-		X = f(U)
-	\]
-
-	\medskip
-	\textbf{Perfect interventions}: the target no longer depends on its parents.
-
-	\bigskip
-	\textbf{Known latent dimension}: the number $n$ of latent variables is given.
+\begin{frame}{General assumptions: additional assumptions}
+	\setupkey
+	\begin{itemize}
+		\setlength{\itemsep}{3.5mm}
+		\item \textbf{Mixing:} $f$ is a diffeomorphism onto its image. No parametric form is imposed.
+		\[
+			X = f(U)
+		\]
+		\item \textbf{Perfect stochastic interventions:} the target no longer depends on its parents.
+		\[
+			p_i\big(u_i \mid u_{\pa(i)}\big) \ \longrightarrow\ \red{\tilde p_i(u_i)}
+			\qquad\qquad
+			\vcenter{\hbox{\begin{tikzpicture}
+				\node[lat,minimum size=6mm] (a) {\scriptsize$U_1$}; \node[lat,minimum size=6mm,right=7mm of a] (b) {\scriptsize$U_2$};
+				\draw[arr] (a) -- (b);
+				\node[right=3mm of b] (ar) {$\longrightarrow$};
+				\node[lat,minimum size=6mm,right=3mm of ar] (c) {\scriptsize$U_1$}; \node[intv,minimum size=6mm,right=7mm of c] (d) {\scriptsize$U_2$};
+				\draw[gone] (c) -- (d);
+			\end{tikzpicture}}}
+		\]
+		\item \textbf{Known latent dimension:} the number $n$ of latent variables is given.
+		\item \textbf{Standard faithfulness}, as in the common setup.
+	\end{itemize}
 \end{frame}
 
 \begin{frame}{What is the learning target?}
+	\setupkey
 	\begin{columns}[onlytextwidth]
 		\begin{column}{0.58\textwidth}
 			\begin{itemize}
@@ -744,11 +815,12 @@
 \end{frame}
 
 %======================================================================
-\section{Additional paper: results and ideas \hfill {\normalsize Francesco}}
+\section{Nonparametric Causal Identifiability: results and ideas \hfill {\normalsize Francesco}}
 %======================================================================
 
 \begin{frame}{Theorem 3.2: bivariate identifiability}
-	\framesubtitle{On top of the general assumptions introduced earlier. Two latent variables, three environments.}
+	\setupkey
+	\framesubtitle{On top of the general assumptions. Two latents, three environments.}
 	\begin{columns}[onlytextwidth,t]
 		\begin{column}{0.36\textwidth}
 			\begin{center}
@@ -787,6 +859,7 @@
 \end{frame}
 
 \begin{frame}{Proof strategy: eliminating cross-coordinate dependencies}
+	\setupkey
 	\framesubtitle{Recall $U = \psi(Z)$, $\psi = f^{-1} \circ h^{-1}$: initially an arbitrary diffeomorphism}
 	\begin{center}
 		\renewcommand{\jacsize}{11mm}
@@ -814,7 +887,8 @@
 \end{frame}
 
 \begin{frame}{Proof idea: eliminating the first off-diagonal entry}
-	\framesubtitle{Aligned targets, $U_1 \to U_2$: compare $e_0$ with the intervention on the root, $e_1$}
+	\setupkey
+	\framesubtitle{Aligned targets: compare $e_0$ with $e_1$, the intervention on the root}
 	\begin{columns}[onlytextwidth]
 		\begin{column}{0.7\textwidth}
 			\begin{align*}
@@ -836,6 +910,7 @@
 \end{frame}
 
 \begin{frame}{Completing the proof: which assumption is used where}
+	\setupkey
 	\framesubtitle{A proof sketch, not the complete proof of Theorem 3.2}
 	\begin{center}
 		\renewcommand{\jacsize}{9mm}
@@ -862,6 +937,7 @@
 \end{frame}
 
 \begin{frame}{Theorem 3.4: arbitrary number of latent variables}
+	\setupkey
 	\framesubtitle{The number $n$ of latent variables is arbitrary, but known}
 	\begin{columns}[onlytextwidth,t]
 		\begin{column}{0.4\textwidth}
@@ -893,105 +969,230 @@
 	\end{columns}
 \end{frame}
 
-\begin{frame}{Interpreting causal representations}
-	\framesubtitle{Names and scales of the latents are arbitrary. Which causal quantities do not depend on them?}
+\begin{frame}{Causal influence: a simple example}
+	\setupkey
+	\framesubtitle{$U_1 \sim \mathcal{N}(0,1)$, \ $U_2 = 2U_1 + \varepsilon_2$, \ $\varepsilon_2 \sim \mathcal{N}(0,1)$, with independent noise}
+	\begin{columns}[onlytextwidth]
+		\begin{column}{0.44\textwidth}
+			\centering
+			$P_U$\\[1mm]
+			\begin{tikzpicture}[baseline=(a.base)]
+				\node[lat,minimum size=6mm] (a) {\scriptsize$U_1$}; \node[lat,minimum size=6mm,right=7mm of a] (b) {\scriptsize$U_2$};
+				\draw[arr] (a) -- (b);
+			\end{tikzpicture}
+			\quad $U_2 = 2U_1 + \varepsilon_2$\\[1mm]
+			\begin{tikzpicture}
+				\draw[black!50] (-13.8mm,-13.0mm) rectangle (13.8mm,13.0mm);
+				\draw[black!20] (-13.8mm,0) -- (13.8mm,0); \draw[black!20] (0,-13.0mm) -- (0,13.0mm);
+				\node[font=\tiny,text=black!60] at (-9.2mm,-15.0mm) {$-2$};
+				\node[font=\tiny,text=black!60] at (0.0mm,-15.0mm) {$0$};
+				\node[font=\tiny,text=black!60] at (9.2mm,-15.0mm) {$2$};
+				\node[font=\tiny,text=black!60,anchor=east] at (-14.3mm,-8.0mm) {$-4$};
+				\node[font=\tiny,text=black!60,anchor=east] at (-14.3mm,0.0mm) {$0$};
+				\node[font=\tiny,text=black!60,anchor=east] at (-14.3mm,8.0mm) {$4$};
+				\node[lbl] at (0,-18.0mm) {$U_1$}; \node[lbl,rotate=90] at (-19.8mm,0) {$U_2$};
+				\fill[ETHBlue!80] (-1.18mm,-1.70mm) circle (0.45mm); \fill[ETHBlue!80] (2.35mm,2.82mm) circle (0.45mm); \fill[ETHBlue!80] (-1.04mm,2.77mm) circle (0.45mm); \fill[ETHBlue!80] (-1.45mm,-6.39mm) circle (0.45mm); \fill[ETHBlue!80] (-4.28mm,-5.97mm) circle (0.45mm); \fill[ETHBlue!80] (-0.98mm,-0.37mm) circle (0.45mm); \fill[ETHBlue!80] (5.11mm,5.24mm) circle (0.45mm); \fill[ETHBlue!80] (1.95mm,2.17mm) circle (0.45mm); \fill[ETHBlue!80] (4.77mm,3.29mm) circle (0.45mm); \fill[ETHBlue!80] (1.14mm,2.31mm) circle (0.45mm); \fill[ETHBlue!80] (1.82mm,2.14mm) circle (0.45mm); \fill[ETHBlue!80] (0.85mm,-0.30mm) circle (0.45mm); \fill[ETHBlue!80] (-7.66mm,-1.80mm) circle (0.45mm); \fill[ETHBlue!80] (3.93mm,4.13mm) circle (0.45mm); \fill[ETHBlue!80] (2.33mm,0.92mm) circle (0.45mm); \fill[ETHBlue!80] (2.29mm,1.80mm) circle (0.45mm); \fill[ETHBlue!80] (-7.78mm,-7.22mm) circle (0.45mm); \fill[ETHBlue!80] (-8.02mm,-7.10mm) circle (0.45mm); \fill[ETHBlue!80] (-4.09mm,-9.01mm) circle (0.45mm); \fill[ETHBlue!80] (-2.15mm,-2.85mm) circle (0.45mm); \fill[ETHBlue!80] (1.41mm,3.24mm) circle (0.45mm); \fill[ETHBlue!80] (-0.21mm,-2.52mm) circle (0.45mm); \fill[ETHBlue!80] (2.40mm,1.95mm) circle (0.45mm); \fill[ETHBlue!80] (-2.95mm,-0.66mm) circle (0.45mm); \fill[ETHBlue!80] (1.42mm,2.95mm) circle (0.45mm); \fill[ETHBlue!80] (1.81mm,4.56mm) circle (0.45mm); \fill[ETHBlue!80] (-3.04mm,-6.05mm) circle (0.45mm); \fill[ETHBlue!80] (7.90mm,6.16mm) circle (0.45mm); \fill[ETHBlue!80] (2.56mm,1.54mm) circle (0.45mm); \fill[ETHBlue!80] (5.51mm,6.03mm) circle (0.45mm); \fill[ETHBlue!80] (-2.85mm,-0.30mm) circle (0.45mm); \fill[ETHBlue!80] (-3.40mm,-8.32mm) circle (0.45mm); \fill[ETHBlue!80] (-1.58mm,0.80mm) circle (0.45mm); \fill[ETHBlue!80] (-0.49mm,-3.32mm) circle (0.45mm); \fill[ETHBlue!80] (2.91mm,3.89mm) circle (0.45mm); \fill[ETHBlue!80] (1.14mm,-1.99mm) circle (0.45mm); \fill[ETHBlue!80] (-2.06mm,-1.44mm) circle (0.45mm); \fill[ETHBlue!80] (-4.40mm,-1.44mm) circle (0.45mm); \fill[ETHBlue!80] (-2.39mm,-2.38mm) circle (0.45mm); \fill[ETHBlue!80] (5.62mm,5.27mm) circle (0.45mm); \fill[ETHBlue!80] (-3.72mm,-1.64mm) circle (0.45mm); \fill[ETHBlue!80] (1.13mm,1.26mm) circle (0.45mm); \fill[ETHBlue!80] (1.96mm,1.53mm) circle (0.45mm); \fill[ETHBlue!80] (-6.85mm,-2.89mm) circle (0.45mm); \fill[ETHBlue!80] (0.22mm,2.29mm) circle (0.45mm); \fill[ETHBlue!80] (6.01mm,4.64mm) circle (0.45mm); \fill[ETHBlue!80] (-9.27mm,-2.57mm) circle (0.45mm); \fill[ETHBlue!80] (-1.48mm,-3.58mm) circle (0.45mm); \fill[ETHBlue!80] (-0.49mm,1.40mm) circle (0.45mm); \fill[ETHBlue!80] (-3.76mm,-3.80mm) circle (0.45mm); \fill[ETHBlue!80] (2.29mm,2.25mm) circle (0.45mm); \fill[ETHBlue!80] (-0.29mm,1.16mm) circle (0.45mm); \fill[ETHBlue!80] (-6.74mm,-5.41mm) circle (0.45mm); \fill[ETHBlue!80] (3.81mm,4.59mm) circle (0.45mm); \fill[ETHBlue!80] (3.08mm,-0.38mm) circle (0.45mm); \fill[ETHBlue!80] (4.35mm,0.76mm) circle (0.45mm); \fill[ETHBlue!80] (6.63mm,6.99mm) circle (0.45mm); \fill[ETHBlue!80] (1.67mm,-0.48mm) circle (0.45mm); \fill[ETHBlue!80] (0.55mm,-1.58mm) circle (0.45mm); \fill[ETHBlue!80] (-5.98mm,-8.14mm) circle (0.45mm); \fill[ETHBlue!80] (2.83mm,4.99mm) circle (0.45mm); \fill[ETHBlue!80] (-2.81mm,-0.95mm) circle (0.45mm); \fill[ETHBlue!80] (-2.08mm,1.14mm) circle (0.45mm); \fill[ETHBlue!80] (-5.82mm,-6.93mm) circle (0.45mm); \fill[ETHBlue!80] (-4.45mm,-3.87mm) circle (0.45mm); \fill[ETHBlue!80] (-2.44mm,-4.41mm) circle (0.45mm); \fill[ETHBlue!80] (5.93mm,6.69mm) circle (0.45mm); \fill[ETHBlue!80] (-9.35mm,-4.95mm) circle (0.45mm); \fill[ETHBlue!80] (-6.71mm,-7.61mm) circle (0.45mm); \fill[ETHBlue!80] (1.10mm,4.08mm) circle (0.45mm); \fill[ETHBlue!80] (6.64mm,7.75mm) circle (0.45mm); \fill[ETHBlue!80] (2.66mm,1.96mm) circle (0.45mm); \fill[ETHBlue!80] (-8.74mm,-11.54mm) circle (0.45mm); \fill[ETHBlue!80] (-11.58mm,-7.26mm) circle (0.45mm); \fill[ETHBlue!80] (1.64mm,1.24mm) circle (0.45mm); \fill[ETHBlue!80] (-3.39mm,-4.15mm) circle (0.45mm); \fill[ETHBlue!80] (-5.15mm,-3.68mm) circle (0.45mm); \fill[ETHBlue!80] (4.50mm,4.73mm) circle (0.45mm); \fill[ETHBlue!80] (5.07mm,7.40mm) circle (0.45mm); \fill[ETHBlue!80] (0.72mm,-1.41mm) circle (0.45mm); \fill[ETHBlue!80] (1.13mm,3.26mm) circle (0.45mm); \fill[ETHBlue!80] (2.00mm,4.71mm) circle (0.45mm); \fill[ETHBlue!80] (7.33mm,9.28mm) circle (0.45mm); \fill[ETHBlue!80] (2.85mm,2.11mm) circle (0.45mm); \fill[ETHBlue!80] (2.39mm,0.59mm) circle (0.45mm); \fill[ETHBlue!80] (2.52mm,4.23mm) circle (0.45mm); \fill[ETHBlue!80] (-7.21mm,-6.04mm) circle (0.45mm); \fill[ETHBlue!80] (5.90mm,5.38mm) circle (0.45mm); \fill[ETHBlue!80] (4.39mm,6.67mm) circle (0.45mm); \fill[ETHBlue!80] (2.44mm,1.59mm) circle (0.45mm); \fill[ETHBlue!80] (-9.08mm,-12.49mm) circle (0.45mm); \fill[ETHBlue!80] (-2.91mm,-3.31mm) circle (0.45mm); \fill[ETHBlue!80] (3.87mm,-0.34mm) circle (0.45mm); \fill[ETHBlue!80] (-8.33mm,-5.61mm) circle (0.45mm); \fill[ETHBlue!80] (-0.85mm,-0.10mm) circle (0.45mm); \fill[ETHBlue!80] (4.69mm,2.86mm) circle (0.45mm); \fill[ETHBlue!80] (-6.03mm,-5.26mm) circle (0.45mm); \fill[ETHBlue!80] (7.41mm,8.11mm) circle (0.45mm); \fill[ETHBlue!80] (2.54mm,2.37mm) circle (0.45mm); \fill[ETHBlue!80] (-0.69mm,2.05mm) circle (0.45mm); \fill[ETHBlue!80] (1.49mm,1.18mm) circle (0.45mm); \fill[ETHBlue!80] (2.99mm,4.68mm) circle (0.45mm); \fill[ETHBlue!80] (0.55mm,3.46mm) circle (0.45mm); \fill[ETHBlue!80] (5.27mm,7.80mm) circle (0.45mm); \fill[ETHBlue!80] (-3.04mm,-3.99mm) circle (0.45mm); \fill[ETHBlue!80] (-1.91mm,0.10mm) circle (0.45mm); \fill[ETHBlue!80] (4.79mm,0.41mm) circle (0.45mm); \fill[ETHBlue!80] (0.12mm,-2.06mm) circle (0.45mm); \fill[ETHBlue!80] (-4.05mm,-7.45mm) circle (0.45mm); \fill[ETHBlue!80] (4.35mm,5.92mm) circle (0.45mm); \fill[ETHBlue!80] (6.74mm,3.40mm) circle (0.45mm); \fill[ETHBlue!80] (-2.05mm,-1.80mm) circle (0.45mm); \fill[ETHBlue!80] (-6.35mm,-5.90mm) circle (0.45mm); \fill[ETHBlue!80] (-0.62mm,-0.60mm) circle (0.45mm); \fill[ETHBlue!80] (-0.69mm,-1.78mm) circle (0.45mm); \fill[ETHBlue!80] (-1.37mm,-0.72mm) circle (0.45mm); \fill[ETHBlue!80] (6.46mm,9.20mm) circle (0.45mm); \fill[ETHBlue!80] (-4.72mm,-4.02mm) circle (0.45mm); \fill[ETHBlue!80] (5.80mm,6.10mm) circle (0.45mm); \fill[ETHBlue!80] (-5.83mm,-3.07mm) circle (0.45mm); \fill[ETHBlue!80] (-3.62mm,-3.54mm) circle (0.45mm); \fill[ETHBlue!80] (2.90mm,0.01mm) circle (0.45mm); \fill[ETHBlue!80] (5.19mm,3.40mm) circle (0.45mm); \fill[ETHBlue!80] (3.95mm,5.58mm) circle (0.45mm); \fill[ETHBlue!80] (1.59mm,-1.91mm) circle (0.45mm); \fill[ETHBlue!80] (0.65mm,-0.63mm) circle (0.45mm); \fill[ETHBlue!80] (0.70mm,2.62mm) circle (0.45mm); \fill[ETHBlue!80] (2.65mm,3.89mm) circle (0.45mm); \fill[ETHBlue!80] (-0.81mm,-0.69mm) circle (0.45mm); \fill[ETHBlue!80] (1.28mm,2.72mm) circle (0.45mm); \fill[ETHBlue!80] (2.63mm,2.62mm) circle (0.45mm); \fill[ETHBlue!80] (0.00mm,-2.35mm) circle (0.45mm); \fill[ETHBlue!80] (3.51mm,-0.07mm) circle (0.45mm); \fill[ETHBlue!80] (2.60mm,0.99mm) circle (0.45mm); \fill[ETHBlue!80] (9.25mm,9.89mm) circle (0.45mm); \fill[ETHBlue!80] (1.49mm,0.17mm) circle (0.45mm); \fill[ETHBlue!80] (-1.97mm,-3.52mm) circle (0.45mm); \fill[ETHBlue!80] (-1.71mm,-3.03mm) circle (0.45mm); \fill[ETHBlue!80] (-0.06mm,-3.12mm) circle (0.45mm); \fill[ETHBlue!80] (4.25mm,3.46mm) circle (0.45mm);
+			\end{tikzpicture}
+		\end{column}
+		\begin{column}{0.1\textwidth}
+			\centering
+			{\Huge$\Rightarrow$}
+		\end{column}
+		\begin{column}{0.44\textwidth}
+			\centering
+			$P_U^{1 \to 2}$\\[1mm]
+			\begin{tikzpicture}[baseline=(a.base)]
+				\node[lat,minimum size=6mm] (a) {\scriptsize$U_1$}; \node[lat,minimum size=6mm,right=7mm of a] (b) {\scriptsize$U_2$};
+				\draw[gone] (a) -- (b);
+				\node[lat,minimum size=6mm,dashed,draw=ETHRed,text=ETHRed,right=7mm of b] (c) {\scriptsize$U_1'$};
+				\draw[arr,ETHRed] (c) -- (b);
+			\end{tikzpicture}
+			\quad $U_2 = 2\red{U_1'} + \varepsilon_2$\\[1mm]
+			\begin{tikzpicture}
+				\draw[black!50] (-13.8mm,-13.0mm) rectangle (13.8mm,13.0mm);
+				\draw[black!20] (-13.8mm,0) -- (13.8mm,0); \draw[black!20] (0,-13.0mm) -- (0,13.0mm);
+				\node[font=\tiny,text=black!60] at (-9.2mm,-15.0mm) {$-2$};
+				\node[font=\tiny,text=black!60] at (0.0mm,-15.0mm) {$0$};
+				\node[font=\tiny,text=black!60] at (9.2mm,-15.0mm) {$2$};
+				\node[font=\tiny,text=black!60,anchor=east] at (-14.3mm,-8.0mm) {$-4$};
+				\node[font=\tiny,text=black!60,anchor=east] at (-14.3mm,0.0mm) {$0$};
+				\node[font=\tiny,text=black!60,anchor=east] at (-14.3mm,8.0mm) {$4$};
+				\node[lbl] at (0,-18.0mm) {$U_1$}; \node[lbl,rotate=90] at (-19.8mm,0) {$U_2$};
+				\fill[ETHRed!80] (-1.18mm,-5.39mm) circle (0.45mm); \fill[ETHRed!80] (2.35mm,2.23mm) circle (0.45mm); \fill[ETHRed!80] (-1.04mm,-5.77mm) circle (0.45mm); \fill[ETHRed!80] (-1.45mm,-3.82mm) circle (0.45mm); \fill[ETHRed!80] (-4.28mm,-4.81mm) circle (0.45mm); \fill[ETHRed!80] (-0.98mm,-7.28mm) circle (0.45mm); \fill[ETHRed!80] (5.11mm,3.70mm) circle (0.45mm); \fill[ETHRed!80] (1.95mm,-0.62mm) circle (0.45mm); \fill[ETHRed!80] (4.77mm,-9.78mm) circle (0.45mm); \fill[ETHRed!80] (1.14mm,-2.19mm) circle (0.45mm); \fill[ETHRed!80] (1.82mm,1.73mm) circle (0.45mm); \fill[ETHRed!80] (0.85mm,-2.88mm) circle (0.45mm); \fill[ETHRed!80] (-7.66mm,7.98mm) circle (0.45mm); \fill[ETHRed!80] (3.93mm,3.70mm) circle (0.45mm); \fill[ETHRed!80] (2.33mm,1.56mm) circle (0.45mm); \fill[ETHRed!80] (2.29mm,1.11mm) circle (0.45mm); \fill[ETHRed!80] (-7.78mm,4.88mm) circle (0.45mm); \fill[ETHRed!80] (-8.02mm,2.51mm) circle (0.45mm); \fill[ETHRed!80] (-4.09mm,-3.65mm) circle (0.45mm); \fill[ETHRed!80] (-2.15mm,-9.31mm) circle (0.45mm); \fill[ETHRed!80] (1.41mm,5.60mm) circle (0.45mm); \fill[ETHRed!80] (-0.21mm,2.90mm) circle (0.45mm); \fill[ETHRed!80] (2.40mm,-1.32mm) circle (0.45mm); \fill[ETHRed!80] (-2.95mm,0.03mm) circle (0.45mm); \fill[ETHRed!80] (1.42mm,9.47mm) circle (0.45mm); \fill[ETHRed!80] (1.81mm,-4.05mm) circle (0.45mm); \fill[ETHRed!80] (-3.04mm,-1.53mm) circle (0.45mm); \fill[ETHRed!80] (7.90mm,8.99mm) circle (0.45mm); \fill[ETHRed!80] (2.56mm,-4.39mm) circle (0.45mm); \fill[ETHRed!80] (5.51mm,4.00mm) circle (0.45mm); \fill[ETHRed!80] (-2.85mm,9.73mm) circle (0.45mm); \fill[ETHRed!80] (-3.40mm,-5.85mm) circle (0.45mm); \fill[ETHRed!80] (-1.58mm,4.42mm) circle (0.45mm); \fill[ETHRed!80] (-0.49mm,0.72mm) circle (0.45mm); \fill[ETHRed!80] (2.91mm,-2.26mm) circle (0.45mm); \fill[ETHRed!80] (1.14mm,-3.34mm) circle (0.45mm); \fill[ETHRed!80] (-2.06mm,1.52mm) circle (0.45mm); \fill[ETHRed!80] (-4.40mm,5.69mm) circle (0.45mm); \fill[ETHRed!80] (-2.39mm,-0.44mm) circle (0.45mm); \fill[ETHRed!80] (5.62mm,-0.40mm) circle (0.45mm); \fill[ETHRed!80] (-3.72mm,-2.47mm) circle (0.45mm); \fill[ETHRed!80] (1.13mm,-1.15mm) circle (0.45mm); \fill[ETHRed!80] (1.96mm,3.39mm) circle (0.45mm); \fill[ETHRed!80] (-6.85mm,3.47mm) circle (0.45mm); \fill[ETHRed!80] (0.22mm,-1.32mm) circle (0.45mm); \fill[ETHRed!80] (6.01mm,-3.95mm) circle (0.45mm); \fill[ETHRed!80] (-1.48mm,2.27mm) circle (0.45mm); \fill[ETHRed!80] (-0.49mm,4.38mm) circle (0.45mm); \fill[ETHRed!80] (-3.76mm,-10.90mm) circle (0.45mm); \fill[ETHRed!80] (2.29mm,2.75mm) circle (0.45mm); \fill[ETHRed!80] (-0.29mm,3.33mm) circle (0.45mm); \fill[ETHRed!80] (-6.74mm,7.18mm) circle (0.45mm); \fill[ETHRed!80] (3.81mm,2.99mm) circle (0.45mm); \fill[ETHRed!80] (3.08mm,-3.32mm) circle (0.45mm); \fill[ETHRed!80] (4.35mm,-0.93mm) circle (0.45mm); \fill[ETHRed!80] (6.63mm,-6.55mm) circle (0.45mm); \fill[ETHRed!80] (1.67mm,2.21mm) circle (0.45mm); \fill[ETHRed!80] (0.55mm,-0.75mm) circle (0.45mm); \fill[ETHRed!80] (-5.98mm,-5.75mm) circle (0.45mm); \fill[ETHRed!80] (2.83mm,7.84mm) circle (0.45mm); \fill[ETHRed!80] (-2.81mm,8.73mm) circle (0.45mm); \fill[ETHRed!80] (-2.08mm,-2.66mm) circle (0.45mm); \fill[ETHRed!80] (-5.82mm,-4.54mm) circle (0.45mm); \fill[ETHRed!80] (-4.45mm,1.17mm) circle (0.45mm); \fill[ETHRed!80] (-2.44mm,-1.55mm) circle (0.45mm); \fill[ETHRed!80] (5.93mm,-0.06mm) circle (0.45mm); \fill[ETHRed!80] (-9.35mm,-0.72mm) circle (0.45mm); \fill[ETHRed!80] (-6.71mm,6.70mm) circle (0.45mm); \fill[ETHRed!80] (1.10mm,7.27mm) circle (0.45mm); \fill[ETHRed!80] (6.64mm,-2.80mm) circle (0.45mm); \fill[ETHRed!80] (2.66mm,-5.74mm) circle (0.45mm); \fill[ETHRed!80] (-8.74mm,2.87mm) circle (0.45mm); \fill[ETHRed!80] (-11.58mm,6.77mm) circle (0.45mm); \fill[ETHRed!80] (1.64mm,7.09mm) circle (0.45mm); \fill[ETHRed!80] (-3.39mm,2.03mm) circle (0.45mm); \fill[ETHRed!80] (-5.15mm,-2.69mm) circle (0.45mm); \fill[ETHRed!80] (4.50mm,1.86mm) circle (0.45mm); \fill[ETHRed!80] (5.07mm,-5.64mm) circle (0.45mm); \fill[ETHRed!80] (0.72mm,-5.03mm) circle (0.45mm); \fill[ETHRed!80] (1.13mm,2.04mm) circle (0.45mm); \fill[ETHRed!80] (2.00mm,5.07mm) circle (0.45mm); \fill[ETHRed!80] (7.33mm,-0.01mm) circle (0.45mm); \fill[ETHRed!80] (2.85mm,-0.86mm) circle (0.45mm); \fill[ETHRed!80] (2.39mm,0.35mm) circle (0.45mm); \fill[ETHRed!80] (2.52mm,3.54mm) circle (0.45mm); \fill[ETHRed!80] (-7.21mm,2.78mm) circle (0.45mm); \fill[ETHRed!80] (5.90mm,1.08mm) circle (0.45mm); \fill[ETHRed!80] (4.39mm,1.55mm) circle (0.45mm); \fill[ETHRed!80] (2.44mm,2.63mm) circle (0.45mm); \fill[ETHRed!80] (-9.08mm,-4.40mm) circle (0.45mm); \fill[ETHRed!80] (-2.91mm,-4.08mm) circle (0.45mm); \fill[ETHRed!80] (3.87mm,-6.21mm) circle (0.45mm); \fill[ETHRed!80] (-8.33mm,1.64mm) circle (0.45mm); \fill[ETHRed!80] (-0.85mm,0.20mm) circle (0.45mm); \fill[ETHRed!80] (4.69mm,-0.59mm) circle (0.45mm); \fill[ETHRed!80] (-6.03mm,-0.02mm) circle (0.45mm); \fill[ETHRed!80] (7.41mm,2.37mm) circle (0.45mm); \fill[ETHRed!80] (2.54mm,-0.38mm) circle (0.45mm); \fill[ETHRed!80] (-0.69mm,-2.38mm) circle (0.45mm); \fill[ETHRed!80] (1.49mm,1.56mm) circle (0.45mm); \fill[ETHRed!80] (2.99mm,6.30mm) circle (0.45mm); \fill[ETHRed!80] (0.55mm,4.72mm) circle (0.45mm); \fill[ETHRed!80] (5.27mm,2.46mm) circle (0.45mm); \fill[ETHRed!80] (-3.04mm,0.44mm) circle (0.45mm); \fill[ETHRed!80] (-1.91mm,-2.10mm) circle (0.45mm); \fill[ETHRed!80] (4.79mm,-11.34mm) circle (0.45mm); \fill[ETHRed!80] (0.12mm,-1.93mm) circle (0.45mm); \fill[ETHRed!80] (-4.05mm,-7.65mm) circle (0.45mm); \fill[ETHRed!80] (4.35mm,5.10mm) circle (0.45mm); \fill[ETHRed!80] (6.74mm,-6.80mm) circle (0.45mm); \fill[ETHRed!80] (-2.05mm,-10.54mm) circle (0.45mm); \fill[ETHRed!80] (-6.35mm,-4.54mm) circle (0.45mm); \fill[ETHRed!80] (-0.62mm,6.26mm) circle (0.45mm); \fill[ETHRed!80] (-0.69mm,-2.71mm) circle (0.45mm); \fill[ETHRed!80] (-1.37mm,-5.01mm) circle (0.45mm); \fill[ETHRed!80] (6.46mm,0.53mm) circle (0.45mm); \fill[ETHRed!80] (-4.72mm,2.17mm) circle (0.45mm); \fill[ETHRed!80] (5.80mm,3.05mm) circle (0.45mm); \fill[ETHRed!80] (-5.83mm,2.71mm) circle (0.45mm); \fill[ETHRed!80] (-3.62mm,5.54mm) circle (0.45mm); \fill[ETHRed!80] (2.90mm,0.31mm) circle (0.45mm); \fill[ETHRed!80] (5.19mm,-1.19mm) circle (0.45mm); \fill[ETHRed!80] (3.95mm,4.53mm) circle (0.45mm); \fill[ETHRed!80] (1.59mm,3.33mm) circle (0.45mm); \fill[ETHRed!80] (0.65mm,2.69mm) circle (0.45mm); \fill[ETHRed!80] (0.70mm,6.11mm) circle (0.45mm); \fill[ETHRed!80] (2.65mm,-2.75mm) circle (0.45mm); \fill[ETHRed!80] (-0.81mm,-0.58mm) circle (0.45mm); \fill[ETHRed!80] (1.28mm,4.53mm) circle (0.45mm); \fill[ETHRed!80] (2.63mm,-0.85mm) circle (0.45mm); \fill[ETHRed!80] (0.00mm,1.92mm) circle (0.45mm); \fill[ETHRed!80] (3.51mm,-0.74mm) circle (0.45mm); \fill[ETHRed!80] (2.60mm,2.36mm) circle (0.45mm); \fill[ETHRed!80] (9.25mm,1.00mm) circle (0.45mm); \fill[ETHRed!80] (1.49mm,9.05mm) circle (0.45mm); \fill[ETHRed!80] (-1.97mm,3.16mm) circle (0.45mm); \fill[ETHRed!80] (-1.71mm,-2.40mm) circle (0.45mm); \fill[ETHRed!80] (-0.06mm,-2.70mm) circle (0.45mm); \fill[ETHRed!80] (4.25mm,10.15mm) circle (0.45mm);
+			\end{tikzpicture}
+		\end{column}
+	\end{columns}
+	\[
+		\mathfrak{C}^{P_U}_{1 \to 2} = D_{\mathrm{KL}}\big(P_U \,\big\|\, P_U^{1 \to 2}\big), \qquad \red{U_1' \sim \mathcal{N}(0,1), \quad U_1' \perp\!\!\!\perp U_1}
+	\]
+\end{frame}
+
+\begin{frame}{Causal influence: definition}
+	\setupkey
 	\begin{columns}[onlytextwidth]
 		\begin{column}{0.36\textwidth}
 			\centering
 			\begin{tikzpicture}
-				\node[lbl,anchor=west] at (-5mm,9mm) {\textbf{Original}: $P_U$};
+				\node[lbl,anchor=west] at (-5mm,9mm) {$P_U$};
 				\node[lat] (a) at (0,0) {$U_i$}; \node[lat] (b) at (22mm,0) {$U_j$};
 				\draw[arr] (a) -- (b);
 				\begin{scope}[yshift=-24mm]
-					\node[lbl,anchor=west] at (-5mm,9mm) {\textbf{Arrow removed}: $P_U^{i \to j}$};
+					\node[lbl,anchor=west] at (-5mm,9mm) {$P_U^{i \to j}$};
 					\node[lat] (c) at (0,0) {$U_i$}; \node[lat] (d) at (22mm,0) {$U_j$};
 					\draw[gone] (c) -- (d);
 					\node[lat,dashed,draw=ETHRed,text=ETHRed] (cc) at (0,-12mm) {$U_i'$};
 					\draw[arr,ETHRed] (cc) -- (d);
-					\node[lbl,text=ETHRed,anchor=west] at (-5mm,-20mm) {$U_i'$: independent copy of $U_i$};
+					\node[lbl,text=ETHRed,anchor=west] at (-5mm,-20mm) {$U_i' \sim P_{U_i}, \quad U_i' \perp\!\!\!\perp U_i$};
 				\end{scope}
 			\end{tikzpicture}
 		\end{column}
 		\begin{column}{0.61\textwidth}
-			\textbf{1. Remove the arrow.} Feed $U_j$ an independent copy of $U_i$ instead of $U_i$ itself:
 			\[
-				p_j^{i \to j}\big(u_j \mid u_{\pa(j) \setminus \{i\}}\big) = \int p_j\big(u_j \mid u_{\pa(j)}\big)\, p_i(u_i)\, \mathrm{d}u_i .
+				p_j^{i \to j}\big(u_j \mid u_{\pa(j) \setminus \{i\}}\big) = \int p_j\big(u_j \mid u_{\pa(j)}\big)\, p_i(u_i)\, \mathrm{d}u_i
 			\]
-			\textbf{2. Measure how much the distribution changes.} This is the \emph{causal influence} of $U_i$ on $U_j$:
 			\[
-				\mathfrak{C}^{P_U}_{i \to j} := D_{\mathrm{KL}}\big(P_U \,\big\|\, P_U^{i \to j}\big) .
+				\mathfrak{C}^{P_U}_{i \to j} := D_{\mathrm{KL}}\big(P_U \,\big\|\, P_U^{i \to j}\big)
 			\]
 			\uncover<2->{
 			\begin{block}{Theorem 4.2}
-				The causal influence is the same in every CRL-equivalent representation:
-				\ $\mathfrak{C}^{P_U}_{i \to j} = \mathfrak{C}^{Q_Z}_{\pi(i) \to \pi(j)}$.
+				\[
+					\mathfrak{C}^{P_U}_{i \to j} = \mathfrak{C}^{Q_Z}_{\pi(i) \to \pi(j)}
+				\]
 			\end{block}}
 		\end{column}
 	\end{columns}
 \end{frame}
 
-\begin{frame}{From identifiability to learning}
-	\framesubtitle{The contribution is theoretical; the learning method is a proof of concept}
+\begin{frame}{Ground truth: how the data are generated}
+	\setupkey
 	\begin{center}
-	\begin{tikzpicture}[st/.style={draw,rounded corners,fill=ETHBlue!10,minimum height=8mm,font=\scriptsize,align=center,inner xsep=2mm}]
-		\node[st] (a) {Multi-environment\\observations};
-		\node[st,right=7mm of a] (b) {Candidate\\causal models};
-		\node[st,right=7mm of b] (c) {Maximum likelihood\\training};
-		\node[st,right=7mm of c] (d) {Model\\selection};
-		\draw[arr] (a) -- (b); \draw[arr] (b) -- (c); \draw[arr] (c) -- (d);
+	\colorlet{candcol}{black!65}
+	\begin{tikzpicture}
+		\node[draw=candcol,line width=1.1pt,fill=black!8,rounded corners=2pt,minimum width=24mm,minimum height=45mm,align=center] (fbox) at (54.5mm,-16mm) {{\scriptsize\bfseries Shared}\\{\scriptsize\bfseries nonlinear mixing}\\[2mm]{\LARGE$f$}\\[2mm]{\scriptsize 3-layer}\\{\scriptsize invertible MLP}};
+		\node[font=\scriptsize,text=black!65] at (54.5mm,10.5mm) {fixed, unknown to the learner};
+		\node[font=\footnotesize] at (54.5mm,-43mm) {$U \xrightarrow{\;f\;} X$};
+		% #1 y-shift, #2 environment, #3 edge, #4 target, #5 mechanism
+		\foreach \y/\e/\edge/\tgt/\mech in {
+				0mm/0/1/0/{$U_1 = \varepsilon_1,\quad U_2 = \alpha U_1 + \varepsilon_2$},
+				-16mm/1/1/1/{$U_1 = \tilde\varepsilon_1 \sim \mathcal{N}(m_1, 1)$},
+				-32mm/2/0/2/{$U_2 = \tilde\varepsilon_2 \sim \mathcal{N}(m_2, 1)$}}{
+			\begin{scope}[yshift=\y]
+				\node[font=\scriptsize,anchor=east] at (-2.5mm,0) {\mech};
+				\node[draw=candcol,line width=1.1pt,rounded corners=2pt,fill=black!4,minimum width=38mm,minimum height=13mm] at (18mm,0) {};
+				\ifnum\tgt=1 \node[zt] (u1) at (9mm,0) {$U_1$}; \else \node[zc] (u1) at (9mm,0) {$U_1$}; \fi
+				\ifnum\tgt=2 \node[zt] (u2) at (27mm,0) {$U_2$}; \else \node[zc] (u2) at (27mm,0) {$U_2$}; \fi
+				\ifnum\edge=1 \draw[arr] (u1) -- (u2); \fi
+				\draw[arr] (37.5mm,0) -- (42mm,0);
+				\draw[arr] (67mm,0) -- (71.5mm,0);
+				\begin{scope}[xshift=79.5mm] \dataicon \end{scope}
+				\node[font=\footnotesize,anchor=west] at (88mm,1.6mm) {$\mathcal{D}^{e_\e}$};
+				\node[font=\scriptsize,anchor=west,text=black!60] at (87.5mm,-2.4mm) {$(X_1, X_2)$};
+			\end{scope}
+		}
+		\node[zt,minimum size=4mm] at (2mm,-43mm) {};
+		\node[font=\scriptsize,anchor=west] at (5mm,-43mm) {intervention target};
 	\end{tikzpicture}
+
+	\smallskip
+	{\scriptsize $\varepsilon_1, \varepsilon_2 \sim \mathcal{N}(0,1)$ \qquad $\alpha \sim \mathrm{Unif}\big([-10,-2] \cup [2,10]\big)$ \qquad $m_i \in \{\pm 2\}$}
 	\end{center}
-	\begin{columns}[onlytextwidth]
-		\begin{column}{0.44\textwidth}
-			\centering
-			\begin{tikzpicture}[cell/.style={draw,minimum width=27mm,minimum height=10mm,font=\scriptsize,align=center}]
-				\node[cell,fill=ETHBlue!15] (c1) at (0,0) {correct graph\\aligned targets};
-				\node[cell] (c2) at (27mm,0) {correct graph\\misaligned targets};
-				\node[cell] (c3) at (0,-10mm) {incorrect graph\\aligned targets};
-				\node[cell] (c4) at (27mm,-10mm) {incorrect graph\\misaligned targets};
-				\node[lbl] at (13.5mm,8mm) {four candidates, same datasets};
-			\end{tikzpicture}
-		\end{column}
-		\begin{column}{0.53\textwidth}
-			\begin{itemize}
-				\item Two proposals: an autoencoder with invariance constraints, or generative modelling by maximum likelihood. The experiments use the second.
-				\item Per candidate: graph and targets are fixed; an invertible normalizing flow and the mechanisms are learned.
-				\item Mixing and non-intervened mechanisms are shared across environments.
-			\end{itemize}
-		\end{column}
-	\end{columns}
-	\medskip
-	\alert{Limitation}: exhaustive search over graphs and intervention targets does not scale to larger systems.
 \end{frame}
 
-\begin{frame}{Experimental validation}
-	\framesubtitle{Figure: von K\"ugelgen et al., 2023, Fig.\ 3}
-	\centering
-	\includegraphics[width=0.56\textwidth]{figures/vk_fig3}
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.4\textwidth}
-			\textbf{Setting}
-			\begin{itemize}
-				\item Two latents, $U_1 \to U_2$; linear Gaussian mechanisms; nonlinear mixing.
-				\item Observational + one perfect intervention per latent; four candidates; 50 ground-truth processes.
-			\end{itemize}
-		\end{column}
-		\begin{column}{0.57\textwidth}
-			\textbf{Metrics and findings}
-			\begin{itemize}
-				\item Validation log-likelihood (model fit, selection criterion): the correct model is generally the best.
-				\item MCC (recovery of the true latents): close to one only for the correct model.
-				\item Empirical support for the identifiability guarantees.
-			\end{itemize}
-		\end{column}
-	\end{columns}
-	\medskip
-	{\itshape Despite these strong theoretical guarantees, the assumptions on interventions remain restrictive, and the proposed learning approach is not scalable.}
+\begin{frame}{Candidate 1: correct graph, aligned targets}
+	\setupkey
+	\begin{center}
+		\candpicture{1}{vkblue}{1}{1}{1}{0}{2}
+	\end{center}
+\end{frame}
 
+\begin{frame}{Candidate 2: correct graph, misaligned targets}
+	\setupkey
+	\begin{center}
+		\candpicture{2}{vkorange}{1}{0}{2}{1}{1}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Candidate 3: incorrect graph, aligned targets}
+	\setupkey
+	\begin{center}
+		\candpicture{3}{vkred}{0}{0}{1}{0}{2}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Candidate 4: incorrect graph, misaligned targets}
+	\setupkey
+	\begin{center}
+		\candpicture{4}{vkpurple}{0}{0}{2}{0}{1}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Maximum likelihood and model selection}
+	\setupkey
+	\vspace{-1mm}
+	\[
+		\log q_X^e(x) =
+		\underbrace{\textcolor{ETHBronze}{\log q_Z^e\big(h_k(x)\big)}}_{\textcolor{ETHBronze}{\text{\scriptsize causal latent density}}}
+		+
+		\underbrace{\textcolor{ETHPetrol}{\log \lvert \det J_{h_k}(x) \rvert}}_{\textcolor{ETHPetrol}{\text{\scriptsize Jacobian correction}}}
+	\]
+	\vspace{-3mm}
+	\begin{center}
+	\begin{tikzpicture}
+		% common input datasets
+		\foreach \e/\y in {0/-4mm,1/-15mm,2/-26mm}{
+			\node[draw=black!55,fill=black!4,minimum width=11mm,minimum height=7.5mm,font=\footnotesize] (d\e) at (0,\y) {$\mathcal{D}^{e_\e}$};
+		}
+		\node[draw=black!45,dashed,rounded corners,fit=(d0)(d2),inner sep=1.5mm] (data) {};
+		% model selection
+		\node[draw=ETHBlue,line width=1pt,rounded corners=2pt,fill=ETHBlue!8,inner sep=2mm] (sel) at (116.5mm,-15mm) {$k^* = \arg\max_k \ell_k^{\mathrm{val}}$};
+		% maximum likelihood stage
+		\node[draw=black!55,fill=black!6,rounded corners=2pt,minimum width=9mm,minimum height=38mm] (ml) at (78.5mm,-15mm) {};
+		\node[rotate=90,font=\scriptsize] at (78.5mm,-15mm) {maximum likelihood};
+		% column headers, colour-matched with the two terms of the formula
+		\node[font=\scriptsize,text=ETHPetrol] at (27mm,6.5mm) {flow $h_k$};
+		\node[font=\scriptsize,text=ETHBronze] at (41.8mm,6.5mm) {$q_Z^{e_0}$}; \node[font=\scriptsize,text=ETHBronze] at (52mm,6.5mm) {$q_Z^{e_1}$}; \node[font=\scriptsize,text=ETHBronze] at (62.2mm,6.5mm) {$q_Z^{e_2}$};
+		\candmini{52mm}{0mm}{vkblue}{1}{1}{1}{0}{2}
+		\node[draw=vkblue,line width=1pt,fill=vkblue!18,rounded corners=1.5pt,minimum width=9mm,minimum height=6.5mm] (h1) at (27mm,0mm) {$h_1$};
+		\draw[arr] (data.east) -- (h1.west); \draw[arr] (h1.east) -- (36.5mm,0mm); \draw[arr] (67.5mm,0mm) -- (74mm,0mm);
+		\node[circle,draw=vkblue,line width=1pt,minimum size=8.5mm,inner sep=0pt,font=\scriptsize] (l1) at (94mm,0mm) {$\ell_1^{\mathrm{val}}$};
+		\draw[arr] (83mm,0mm) -- (l1.west); \draw[arr] (l1.east) -- (sel.west);
+		\candmini{52mm}{-10mm}{vkorange}{1}{0}{2}{1}{1}
+		\node[draw=vkorange,line width=1pt,fill=vkorange!18,rounded corners=1.5pt,minimum width=9mm,minimum height=6.5mm] (h2) at (27mm,-10mm) {$h_2$};
+		\draw[arr] (data.east) -- (h2.west); \draw[arr] (h2.east) -- (36.5mm,-10mm); \draw[arr] (67.5mm,-10mm) -- (74mm,-10mm);
+		\node[circle,draw=vkorange,line width=1pt,minimum size=8.5mm,inner sep=0pt,font=\scriptsize] (l2) at (94mm,-10mm) {$\ell_2^{\mathrm{val}}$};
+		\draw[arr] (83mm,-10mm) -- (l2.west); \draw[arr] (l2.east) -- (sel.west);
+		\candmini{52mm}{-20mm}{vkred}{0}{0}{1}{0}{2}
+		\node[draw=vkred,line width=1pt,fill=vkred!18,rounded corners=1.5pt,minimum width=9mm,minimum height=6.5mm] (h3) at (27mm,-20mm) {$h_3$};
+		\draw[arr] (data.east) -- (h3.west); \draw[arr] (h3.east) -- (36.5mm,-20mm); \draw[arr] (67.5mm,-20mm) -- (74mm,-20mm);
+		\node[circle,draw=vkred,line width=1pt,minimum size=8.5mm,inner sep=0pt,font=\scriptsize] (l3) at (94mm,-20mm) {$\ell_3^{\mathrm{val}}$};
+		\draw[arr] (83mm,-20mm) -- (l3.west); \draw[arr] (l3.east) -- (sel.west);
+		\candmini{52mm}{-30mm}{vkpurple}{0}{0}{2}{0}{1}
+		\node[draw=vkpurple,line width=1pt,fill=vkpurple!18,rounded corners=1.5pt,minimum width=9mm,minimum height=6.5mm] (h4) at (27mm,-30mm) {$h_4$};
+		\draw[arr] (data.east) -- (h4.west); \draw[arr] (h4.east) -- (36.5mm,-30mm); \draw[arr] (67.5mm,-30mm) -- (74mm,-30mm);
+		\node[circle,draw=vkpurple,line width=1pt,minimum size=8.5mm,inner sep=0pt,font=\scriptsize] (l4) at (94mm,-30mm) {$\ell_4^{\mathrm{val}}$};
+		\draw[arr] (83mm,-30mm) -- (l4.west); \draw[arr] (l4.east) -- (sel.west);
+	\end{tikzpicture}
+	\end{center}
+\end{frame}
+
+\begin{frame}{Experimental results}
+	\setupkey
+	\begin{center}
+	\begin{tikzpicture}
+		\candmini{0mm}{0mm}{vkblue}{1}{1}{1}{0}{2}
+		\candmini{35mm}{0mm}{vkorange}{1}{0}{2}{1}{1}
+		\candmini{70mm}{0mm}{vkred}{0}{0}{1}{0}{2}
+		\candmini{105mm}{0mm}{vkpurple}{0}{0}{2}{0}{1}
+	\end{tikzpicture}
+
+	\smallskip
+	\includegraphics[width=0.9\textwidth]{figures/vk_fig3}
+	\end{center}
+	\src{Plot: von K\"ugelgen et al., 2023, Fig.\ 3.}
 \end{frame}
 
 %======================================================================
-\section{Limitations and motivation for the main paper \hfill {\normalsize Francesco}}
+\section{Limitations, and motivation for Causal Disentanglement \hfill {\normalsize Francesco}}
 %======================================================================
 
 \begin{frame}{Limitations of the nonparametric result}
@@ -1016,7 +1217,7 @@
 	{\scriptsize
 	\begin{tabular}{@{}p{0.2\textwidth}p{0.36\textwidth}p{0.36\textwidth}@{}}
 		\toprule
-		& \textbf{von K\"ugelgen et al.} & \textbf{Zhang et al.\ (main paper)} \\
+		& \textbf{Nonparametric Identifiability} & \textbf{Causal Disentanglement} \\
 		\midrule
 		Latent mechanisms & nonparametric & nonparametric \\
 		Mixing $f$ & any smooth invertible map & \red{full-rank polynomial} (includes linear) \\
@@ -1031,34 +1232,8 @@
 	\end{tabular}}
 \end{frame}
 
-\begin{frame}{Motivation for the main paper}
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\begin{block}{Give up}
-				\begin{itemize}
-					\item A fully general mixing: $f$ is a polynomial.
-					\item Recovering every latent one by one.
-				\end{itemize}
-			\end{block}
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\begin{block}{Gain}
-				\begin{itemize}
-					\item Soft interventions.
-					\item Unknown number of latents.
-					\item One intervention per node for any $p$.
-					\item An algorithm that runs on real genomic data.
-				\end{itemize}
-			\end{block}
-		\end{column}
-	\end{columns}
-	\bigskip
-	\textbf{Question for the rest of the talk:}\\[1mm]
-	If interventions only \emph{change} mechanisms instead of replacing them, what can still be identified, and how do we learn it?
-\end{frame}
-
 %======================================================================
-\section{Main paper: identifiability from soft interventions \hfill {\normalsize Joan}}
+\section{Causal Disentanglement from Soft Interventions: identifiability \hfill {\normalsize Joan}}
 %======================================================================
 
 % TODO (Joan): adapt this slide to the main-paper section
@@ -1214,7 +1389,7 @@
 \end{frame}
 
 %======================================================================
-\section{Main paper: the discrepancy-based VAE \hfill {\normalsize Joan}}
+\section{Causal Disentanglement from Soft Interventions: the discrepancy-based VAE \hfill {\normalsize Joan}}
 %======================================================================
 
 \begin{frame}{How do we learn the model in practice?}
@@ -1306,7 +1481,7 @@
 \end{frame}
 
 %======================================================================
-\section{Main paper: experiments and conclusion \hfill {\normalsize Joan}}
+\section{Causal Disentanglement from Soft Interventions: experiments and conclusion \hfill {\normalsize Joan}}
 %======================================================================
 
 \begin{frame}{Data: a large Perturb-seq screen}
@@ -1392,7 +1567,7 @@
 			\end{block}
 		\end{column}
 		\begin{column}{0.47\textwidth}
-			\begin{block}{Limitations of the main paper}
+			\begin{block}{Limitations of Causal Disentanglement}
 				\begin{itemize}
 					\item An intervention on \emph{every} latent is needed. This is already partial knowledge of the latents, and it is not always feasible.
 					\item Single-node interventions: drugs often hit several targets.
@@ -1417,97 +1592,5 @@
 	J.\ von K\"ugelgen, M.\ Besserve, L.\ Wendong, L.\ Gresele, A.\ Keki\'c, E.\ Bareinboim, D.\ M.\ Blei, B.\ Sch\"olkopf.
 	\emph{Nonparametric Identifiability of Causal Representations from Unknown Interventions.} arXiv:2306.00542, 2023.
 \end{closingframe}
-
-%======================================================================
-% Appendix (backup slides, not in the main path)
-%======================================================================
-
-\begin{frame}[noframenumbering]{Appendix: d-separation (1/3)}
-	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{1. Chain}
-	\bigskip
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\centering
-			No conditioning\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHGreen}{\textbf{path open}}
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\centering
-			Conditioning on $U_2$\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (b) -- (c);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHRed}{\textbf{path blocked}}
-		\end{column}
-	\end{columns}
-	\bigskip
-	\begin{center}
-		A chain is blocked if $U_2 \in S$.
-	\end{center}
-\end{frame}
-
-\begin{frame}[noframenumbering]{Appendix: d-separation (2/3)}
-	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{2. Fork}
-	\bigskip
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\centering
-			No conditioning\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (b) -- (a); \draw[arr] (b) -- (c);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHGreen}{\textbf{path open}}
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\centering
-			Conditioning on $U_2$\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (b) -- (a); \draw[arr] (b) -- (c);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHRed}{\textbf{path blocked}}
-		\end{column}
-	\end{columns}
-	\bigskip
-	\begin{center}
-		A fork is blocked if $U_2 \in S$.
-	\end{center}
-\end{frame}
-
-\begin{frame}[noframenumbering]{Appendix: d-separation (3/3)}
-	A path between two nodes can be \textbf{blocked} by a set $S$ in three ways. \ \textbf{3. Collider}
-	\bigskip
-	\begin{columns}[onlytextwidth,t]
-		\begin{column}{0.47\textwidth}
-			\centering
-			No conditioning\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (c) -- (b);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHRed}{\textbf{path blocked}}
-		\end{column}
-		\begin{column}{0.47\textwidth}
-			\centering
-			Conditioning on $U_2$\\[3mm]
-			\begin{tikzpicture}
-				\node[lat] (a) {$U_1$}; \node[lat,fill=ETHGray!35,right=9mm of a] (b) {$U_2$}; \node[lat,right=9mm of b] (c) {$U_3$};
-				\draw[arr] (a) -- (b); \draw[arr] (c) -- (b);
-			\end{tikzpicture}\\[3mm]
-			\textcolor{ETHGreen}{\textbf{path open}}
-		\end{column}
-	\end{columns}
-	\bigskip
-	\begin{center}
-		A collider is blocked if $U_2 \notin S$ and no descendant of $U_2$ is in $S$.\\[3mm]
-		$U_i$ and $U_j$ are \textbf{d-separated} by $S$ if \emph{every} path between them is blocked by $S$.
-	\end{center}
-\end{frame}
 
 \end{document}
