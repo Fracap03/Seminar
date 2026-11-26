@@ -18,7 +18,7 @@ Joan introduces why the problem exists (including the ICA comparison, slide 5, a
 ### Slides 13-15: Multi-environment data, one property per slide (2.5 min in total)
 - Slide 13, unpaired samples: sequencing destroys the cell, so a cell is seen either unperturbed or perturbed. We compare populations, never the same unit before and after.
 - Slide 14, known environment label: the experiment records which perturbation each cell received (in CRISPR screens via a barcode), so we know which experiment each sample comes from.
-- Slide 15, unknown latent target: we know which gene the experiment activates, but not which hidden causal coordinate (gene program) that changes. Each row of the table is one cell. Stress the difference between knowing the experiment and knowing the target.
+- Slide 15, unknown latent target: we know which gene the experiment activates, but not which hidden causal coordinate (gene program) that changes. Each row of the table is one cell, and an environment contains many cells; the values are made up, for illustration only. Stress the difference between knowing the experiment and knowing the target.
 
 ### Slides 16-17: Shared mechanisms and single-node interventions (2 min)
 - This is what links the datasets. Without something shared, several datasets would not help.
@@ -100,7 +100,7 @@ No theorem statements or assumption lists here: only the model and the two ideas
 - A4, genericity: the ratio between intervened and original mechanism of `U2` does not have the same distribution in `e0` and `e1`. In the paper it is stated with a test function `phi`; this is the same thing. It is what excludes misaligned targets (slide 30).
 - Result: any candidate that fits is CRL-equivalent to the truth.
 
-### Slide 28: Proof strategy, eliminating cross-coordinate dependencies (1.5 min)
+### Slide 28: Proof strategy, eliminating cross-dependencies (1.5 min)
 - `psi` is the map of slide 22. At the start it is an arbitrary diffeomorphism: each true latent may depend on both learned coordinates.
 - Read the left matrix: rows are true latents, columns are learned coordinates. Blue entries are the allowed dependencies, red entries are mixing.
 - The goal is the right matrix: red entries equal to zero, so each true latent depends on one learned coordinate only.
@@ -115,7 +115,7 @@ No theorem statements or assumption lists here: only the model and the two ideas
 - Click 4: the left side does not depend on `z2`; differentiate. A3 says `R1'` is never zero, so the derivative of `psi1` with respect to `z2` vanishes.
 - Click 5: the upper-right entry of the Jacobian becomes zero. The lower-left one is still open.
 
-### Slide 30: Completing the proof, which assumption is used where (1 min)
+### Slide 30: Completing the proof, assumptions used (1 min)
 - Say that this is a sketch, and do not explain the remaining steps: only name the assumption each one uses.
 - Upper-right entry: A1, A2, A3 (previous slide).
 - Lower-left entry: A1 and A2, and here it matters that the intervention on the child is perfect. One sentence: this is the step that fails for soft interventions, which is what Causal Disentanglement addresses. Do not claim perfect interventions are necessary in general.
@@ -164,6 +164,7 @@ No theorem statements or assumption lists here: only the model and the two ideas
 ### Slide 39: Maximum likelihood and model selection (1 min)
 - The same three datasets go to all four candidates. Each has its own flow and its own three graphs (the miniatures: columns are `e0`, `e1`, `e2`).
 - Each candidate is trained by maximum likelihood and gets a validation log-likelihood.
+- Say aloud (the formula is no longer on the slide): by change of variables, the log-likelihood of `x` is the log-density of the latent `h_k(x)` under the candidate's causal model plus the log-determinant of the Jacobian of the flow.
 - The candidate with the highest one is selected. Do not say the correct model always wins: it does in most runs, not in all.
 - Limitation, say it aloud: this is an exhaustive search over graphs and target assignments; it does not scale.
 

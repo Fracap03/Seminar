@@ -46,14 +46,15 @@
 
 \newcommand{\atag}[1]{\text{\textcolor{ETHBlue}{\scriptsize\bfseries #1}}}
 % Small legend in the top-right corner recalling the general setting (used on the additional-paper slides)
-\newcommand{\setupkey}{%
+\newcommand{\setupkey}[1][0]{% optional argument 1: also show the equivalence row
+	\ifnum#1=1 \def\setupkeyextra{\\ $\crl$ & $Z_{\pi(i)} = \phi_i(U_i)$}\else \def\setupkeyextra{}\fi
 	\begin{tikzpicture}[remember picture,overlay]
 		\node[anchor=north east,inner sep=0pt,xshift=-9.5mm,yshift=-3.5mm] at (current page.north east) {%
-			\scriptsize\renewcommand{\arraystretch}{0.95}%
-			\begin{tabular}{@{}!{\color{black!30}\vrule width 0.6pt}@{\hspace{1.5mm}}c@{\hspace{1.5mm}}l@{}}
-				\textcolor{ETHGray}{$U$} & \textcolor{ETHGray}{latent causal variables} \\
-				$X$ & observed data \\
-				\textcolor{ETHBlue}{$Z$} & \textcolor{ETHBlue}{learned representation}
+			\scriptsize\renewcommand{\arraystretch}{0.88}%
+			\begin{tabular}{@{}!{\color{black!30}\vrule width 0.6pt}@{\hspace{1.5mm}}l@{\hspace{1.5mm}}l@{}}
+				\textcolor{ETHGray}{$U,\ G$} & \textcolor{ETHGray}{latents, true graph} \\
+				$X = f(U)$ & observed, mixing $f$ \\
+				\textcolor{ETHBlue}{$Z = h(X),\ G'$} & \textcolor{ETHBlue}{learned, encoder $h$}\setupkeyextra
 			\end{tabular}};
 	\end{tikzpicture}\par\vspace*{-\baselineskip}\vspace*{-\parskip}%
 }
@@ -90,7 +91,6 @@
 	\begin{tikzpicture}
 		\node[draw=candcol,line width=1.1pt,fill=candcol!18,rounded corners=2pt,minimum width=22mm,minimum height=45mm,align=center] at (43mm,-16mm) {{\scriptsize\bfseries Shared}\\{\scriptsize\bfseries Normalizing Flow}\\[2mm]{\LARGE$h_{#1}$}\\[2mm]{\scriptsize invertible}\\{\scriptsize neural network}};
 		\node[font=\scriptsize,text=candcol!75!black] at (43mm,10.5mm) {learned};
-		\node[font=\scriptsize,text=black!65,align=center] at (95mm,12mm) {graph and targets fixed\\\textcolor{candcol!75!black}{mechanisms learned}};
 		\node[font=\footnotesize] at (43mm,-43mm) {$Z = h_{#1}(X), \quad X = h_{#1}^{-1}(Z)$};
 		\candrow{0mm}{0}{#3}{0}
 		\candrow{-16mm}{1}{#4}{#5}
@@ -457,7 +457,7 @@
 	\framesubtitle{The same system under several experimental conditions: $X^e = f(U^e),\ e \in \mathcal{E}$}
 	\begin{columns}[onlytextwidth]
 		\begin{column}{0.5\textwidth}
-			An \textbf{environment} is one experimental condition. Each gives its own dataset of samples of $X$.
+			An \textbf{environment} is one experimental condition. Each gives its own dataset $\mathcal{D}^e$ of samples of $X$.
 			\begin{itemize}
 				\item $e_0$: \textbf{observational}. The system is left alone.
 				\item $e_1, e_2, \dots$: \textbf{interventional}. One latent mechanism is changed in each.
@@ -472,7 +472,10 @@
 						\node[lat,minimum size=5.5mm,right=5mm of a\k] (b\k) {\tiny$U_2$};
 						\draw[arr] (a\k) -- (b\k);
 						\node[trapezium,draw,fill=ETHBlue!15,shape border rotate=270,minimum height=5mm,minimum width=9mm,right=5mm of b\k] (f\k) {\scriptsize$f$};
-						\node[draw,fill=ETHGray!15,minimum width=11mm,minimum height=7mm,right=5mm of f\k,font=\scriptsize] (x\k) {$X^{e_\k}$};
+						\node[minimum width=14mm,minimum height=10mm,inner sep=0pt,right=3.5mm of f\k] (x\k) {};
+						\begin{scope}[shift={(x\k.center)}] \dataicon \end{scope}
+						\node[font=\footnotesize,anchor=west] at ([xshift=1mm,yshift=1.6mm]x\k.east) {$\mathcal{D}^{e_\k}$};
+						\node[font=\scriptsize,anchor=west,text=black!60] at ([xshift=0.5mm,yshift=-2.4mm]x\k.east) {samples of $X$};
 						\draw[arr] (b\k) -- (f\k); \draw[arr] (f\k) -- (x\k);
 						\node[lbl,anchor=west] at ([yshift=7.5mm]a\k.west) {$e_\k$: \lab};
 					\end{scope}
@@ -523,10 +526,15 @@
 		\end{column}
 		\begin{column}{0.46\textwidth}
 			\centering
-			\begin{tikzpicture}[ds/.style={draw,fill=ETHGray!15,minimum width=30mm,minimum height=8mm,font=\footnotesize}]
-				\node[ds] (d0) {samples of $X^{e_0}$};
-				\node[ds,below=3mm of d0] (d1) {samples of $X^{e_1}$};
-				\node[ds,below=3mm of d1] (d2) {samples of $X^{e_2}$};
+			\begin{tikzpicture}[ds/.style={minimum width=14mm,minimum height=10mm,inner sep=0pt}]
+				\node[ds] (d0) {};
+				\node[ds,below=4mm of d0] (d1) {};
+				\node[ds,below=4mm of d1] (d2) {};
+				\foreach \k in {0,1,2}{
+					\begin{scope}[shift={(d\k.center)}] \dataicon \end{scope}
+					\node[font=\footnotesize,anchor=west] at ([xshift=1mm,yshift=1.6mm]d\k.east) {$\mathcal{D}^{e_\k}$};
+					\node[font=\scriptsize,anchor=west,text=black!60] at ([xshift=0.5mm,yshift=-2.4mm]d\k.east) {samples of $X$};
+				}
 				\node[lbl,left=2mm of d0] {control}; \node[lbl,left=2mm of d1,text=ETHRed] {gene A activated}; \node[lbl,left=2mm of d2,text=ETHRed] {gene B activated};
 			\end{tikzpicture}
 		\end{column}
@@ -558,9 +566,6 @@
 			& 6 & 0.3 & \red{\textbf{2.7}} & 0.0 & $\cdots$ & gene B activated & \red{gene B $\leftrightarrow U_j$, \ $j = {?}$} \\
 			\bottomrule
 		\end{tabular}}
-
-		\smallskip
-		{\tiny\textcolor{ETHGray}{Each row is one cell; an environment contains many cells. Made-up values, for illustration only.}}
 	\end{center}
 \end{frame}
 
@@ -581,7 +586,10 @@
 						\node[lat,minimum size=5.5mm,right=5mm of a\k] (b\k) {\tiny$U_2$};
 						\draw[arr] (a\k) -- (b\k);
 						\node[trapezium,draw=ETHBlue,very thick,fill=ETHBlue!15,shape border rotate=270,minimum height=5mm,minimum width=9mm,right=5mm of b\k] (f\k) {\scriptsize$f$};
-						\node[draw,fill=ETHGray!15,minimum width=11mm,minimum height=7mm,right=5mm of f\k,font=\scriptsize] (x\k) {$X^{e_\k}$};
+						\node[minimum width=14mm,minimum height=10mm,inner sep=0pt,right=3.5mm of f\k] (x\k) {};
+						\begin{scope}[shift={(x\k.center)}] \dataicon \end{scope}
+						\node[font=\footnotesize,anchor=west] at ([xshift=1mm,yshift=1.6mm]x\k.east) {$\mathcal{D}^{e_\k}$};
+						\node[font=\scriptsize,anchor=west,text=black!60] at ([xshift=0.5mm,yshift=-2.4mm]x\k.east) {samples of $X$};
 						\draw[arr] (b\k) -- (f\k); \draw[arr] (f\k) -- (x\k);
 					\end{scope}
 				}
@@ -609,15 +617,9 @@
 			\end{align*}
 		\end{column}
 	\end{columns}
-	\bigskip
-	\begin{center}
-		One mechanism changes per intervention; all the others stay the same.\\[1mm]
-		Every latent node is targeted.
-	\end{center}
 \end{frame}
 
 \begin{frame}{The formal identification question}
-	A candidate $(h, G')$: an encoder $Z = h(X)$ and a graph $G'$ that explain \emph{all} environments and satisfy the assumptions.
 	\begin{center}
 	\begin{tikzpicture}
 		% truth
@@ -650,7 +652,6 @@
 	\begin{center}
 		\textbf{Question}: do all such candidates belong to the blue class?
 	\end{center}
-	Fitting the data is not enough: assumptions must link the distribution to the causal structure.
 \end{frame}
 
 \begin{frame}{Can independence hide causal connections?}
@@ -688,8 +689,7 @@
 	\uncover<3->{
 	\begin{block}{Faithfulness}
 		Faithfulness rules out independences caused by exact cancellation rather than graphical separation.
-	\end{block}
-	{\scriptsize Nonparametric Identifiability: standard faithfulness. \ Causal Disentanglement: distinct conditions for interventions and linear mixing.}}
+	\end{block}}
 \end{frame}
 
 \begin{frame}{Two routes to identifiability}
@@ -780,7 +780,7 @@
 \end{frame}
 
 \begin{frame}{What is the learning target?}
-	\setupkey
+	\setupkey[1]
 	\begin{columns}[onlytextwidth]
 		\begin{column}{0.58\textwidth}
 			\begin{itemize}
@@ -819,8 +819,8 @@
 %======================================================================
 
 \begin{frame}{Theorem 3.2: bivariate identifiability}
-	\setupkey
-	\framesubtitle{On top of the general assumptions. Two latents, three environments.}
+	\setupkey[1]
+	\framesubtitle{Two latent variables, three environments}
 	\begin{columns}[onlytextwidth,t]
 		\begin{column}{0.36\textwidth}
 			\begin{center}
@@ -858,9 +858,9 @@
 	\end{block}
 \end{frame}
 
-\begin{frame}{Proof strategy: eliminating cross-coordinate dependencies}
+\begin{frame}{Proof strategy: eliminating cross-dependencies}
 	\setupkey
-	\framesubtitle{Recall $U = \psi(Z)$, $\psi = f^{-1} \circ h^{-1}$: initially an arbitrary diffeomorphism}
+	\framesubtitle{$U = \psi(Z)$, $\psi = f^{-1} \circ h^{-1}$: an arbitrary diffeomorphism}
 	\begin{center}
 		\renewcommand{\jacsize}{11mm}
 		\begin{tabular}{@{}c@{\hspace{4mm}}c@{\hspace{4mm}}c@{}}
@@ -909,8 +909,8 @@
 	\end{columns}
 \end{frame}
 
-\begin{frame}{Completing the proof: which assumption is used where}
-	\setupkey
+\begin{frame}{Completing the proof: assumptions used}
+	\setupkey[1]
 	\framesubtitle{A proof sketch, not the complete proof of Theorem 3.2}
 	\begin{center}
 		\renewcommand{\jacsize}{9mm}
@@ -937,20 +937,20 @@
 \end{frame}
 
 \begin{frame}{Theorem 3.4: arbitrary number of latent variables}
-	\setupkey
+	\setupkey[1]
 	\framesubtitle{The number $n$ of latent variables is arbitrary, but known}
 	\begin{columns}[onlytextwidth,t]
 		\begin{column}{0.4\textwidth}
 			\begin{center}
 			\begin{tikzpicture}[env/.style={draw,fill=ETHGray!15,minimum width=9mm,minimum height=6mm,font=\scriptsize}]
-				\foreach \k/\i/\y in {1/1/0,2/2/-10,3/n/-26}{
+				\foreach \k/\i/\y in {1/1/0,2/2/-8.5,3/n/-20}{
 					\node[intv,minimum size=7mm] (u\k) at (0,\y mm) {\scriptsize$U_\i$};
 					\node[env] (e\k) at (17mm,\y mm) {$e_\i$};
 					\node[env] (f\k) at (29mm,\y mm) {$e_\i'$};
 					\draw[arr,ETHRed] (e\k) -- (u\k);
 					\node[draw=ETHBlue,rounded corners,fit=(e\k)(f\k),inner sep=1mm] {};
 				}
-				\node at (0,-17.5mm) {$\vdots$}; \node at (23mm,-17.5mm) {$\vdots$};
+				\node[font=\tiny,inner sep=0pt] at (0,-13.9mm) {$\vdots$}; \node[font=\tiny,inner sep=0pt] at (23mm,-13.9mm) {$\vdots$};
 				\node[lbl,text=ETHBlue] at (23mm,7mm) {known pairs};
 			\end{tikzpicture}
 			\end{center}
@@ -962,16 +962,20 @@
 				\item[\textbf{A3$'$}] Interventional discrepancy between the two paired mechanisms: for all $u_i$,
 				$\displaystyle \Big(\frac{\tilde p_i'}{\tilde p_i}\Big)'(u_i) \neq 0$.
 			\end{itemize}
-			\begin{block}{Theorem 3.4}
-				\centering $(h, G') \crl (f^{-1}, G)$
-			\end{block}
 		\end{column}
 	\end{columns}
+	\begin{block}{Theorem 3.4}
+		Under A1, A2$'$, A3$'$, any candidate $(h, G')$ that fits all environments satisfies
+		\[
+			(h, G') \crl (f^{-1}, G) .
+		\]
+		The latent variables and their causal graph are identified up to permutation and element-wise rescaling.
+	\end{block}
 \end{frame}
 
 \begin{frame}{Causal influence: a simple example}
 	\setupkey
-	\framesubtitle{$U_1 \sim \mathcal{N}(0,1)$, \ $U_2 = 2U_1 + \varepsilon_2$, \ $\varepsilon_2 \sim \mathcal{N}(0,1)$, with independent noise}
+	\framesubtitle{$U_1 \sim \mathcal{N}(0,1)$, \ $U_2 = 2U_1 + \varepsilon_2$, \ $\varepsilon_2 \sim \mathcal{N}(0,1)$}
 	\begin{columns}[onlytextwidth]
 		\begin{column}{0.44\textwidth}
 			\centering
@@ -1028,7 +1032,7 @@
 \end{frame}
 
 \begin{frame}{Causal influence: definition}
-	\setupkey
+	\setupkey[1]
 	\begin{columns}[onlytextwidth]
 		\begin{column}{0.36\textwidth}
 			\centering
@@ -1054,10 +1058,12 @@
 				\mathfrak{C}^{P_U}_{i \to j} := D_{\mathrm{KL}}\big(P_U \,\big\|\, P_U^{i \to j}\big)
 			\]
 			\uncover<2->{
-			\begin{block}{Theorem 4.2}
+			\begin{block}{Theorem 4.2: causal influences are preserved under $\crl$}
+				If $Z$ is equivalent to $U$, i.e.\ $Z_{\pi(i)} = \phi_i(U_i)$ for all $i$, then for every edge $U_i \to U_j$:
 				\[
-					\mathfrak{C}^{P_U}_{i \to j} = \mathfrak{C}^{Q_Z}_{\pi(i) \to \pi(j)}
+					\mathfrak{C}^{P_U}_{i \to j} = \mathfrak{C}^{Q_Z}_{\pi(i) \to \pi(j)} .
 				\]
+				The strength of each edge is the same in the learned representation.
 			\end{block}}
 		\end{column}
 	\end{columns}
@@ -1069,7 +1075,7 @@
 	\colorlet{candcol}{black!65}
 	\begin{tikzpicture}
 		\node[draw=candcol,line width=1.1pt,fill=black!8,rounded corners=2pt,minimum width=24mm,minimum height=45mm,align=center] (fbox) at (54.5mm,-16mm) {{\scriptsize\bfseries Shared}\\{\scriptsize\bfseries nonlinear mixing}\\[2mm]{\LARGE$f$}\\[2mm]{\scriptsize 3-layer}\\{\scriptsize invertible MLP}};
-		\node[font=\scriptsize,text=black!65] at (54.5mm,10.5mm) {fixed, unknown to the learner};
+		\node[font=\scriptsize,text=black!65,anchor=south,inner sep=0pt] at ([yshift=1.5mm]fbox.north) {fixed, unknown};
 		\node[font=\footnotesize] at (54.5mm,-43mm) {$U \xrightarrow{\;f\;} X$};
 		% #1 y-shift, #2 environment, #3 edge, #4 target, #5 mechanism
 		\foreach \y/\e/\edge/\tgt/\mech in {
@@ -1128,14 +1134,6 @@
 
 \begin{frame}{Maximum likelihood and model selection}
 	\setupkey
-	\vspace{-1mm}
-	\[
-		\log q_X^e(x) =
-		\underbrace{\textcolor{ETHBronze}{\log q_Z^e\big(h_k(x)\big)}}_{\textcolor{ETHBronze}{\text{\scriptsize causal latent density}}}
-		+
-		\underbrace{\textcolor{ETHPetrol}{\log \lvert \det J_{h_k}(x) \rvert}}_{\textcolor{ETHPetrol}{\text{\scriptsize Jacobian correction}}}
-	\]
-	\vspace{-3mm}
 	\begin{center}
 	\begin{tikzpicture}
 		% common input datasets
